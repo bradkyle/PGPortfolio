@@ -1,0 +1,6 @@
+README.md
+setup.py
+pgportfolio.egg-info/PKG-INFO
+pgportfolio.egg-info/SOURCES.txt
+pgportfolio.egg-info/dependency_links.txt
+pgportfolio.egg-info/top_level.txt
