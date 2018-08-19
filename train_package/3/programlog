@@ -1,0 +1,49 @@
+INFO:root:select coins offline from 2017-04-03 12:28 to 2017-05-03 12:28
+DEBUG:root:Selected coins are: ['ETH', 'LTC', 'XRP', 'reversed_USDT', 'ETC', 'DASH', 'XMR', 'XEM', 'FCT', 'GNT', 'ZEC']
+INFO:root:feature type list is ['close', 'high', 'low']
+DEBUG:root:buffer_bias is 0.000050
+INFO:root:the number of training examples is 32249, of test examples is 2776
+DEBUG:root:the training set is from 0 to 32248
+DEBUG:root:the test set is from 32281 to 35088
+WARNING:tensorflow:From /home/thorad/.conda/envs/pgportfolio/lib/python3.6/site-packages/tflearn/initializations.py:119: UniformUnitScaling.__init__ (from tensorflow.python.ops.init_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.initializers.variance_scaling instead with distribution=uniform to get equivalent behavior.
+INFO:root:upper bound in test is 7.156389528173714e+28
+INFO:tensorflow:Summary name Conv2D/W:0 is illegal; using Conv2D/W_0 instead.
+INFO:tensorflow:Summary name Conv2D/b:0 is illegal; using Conv2D/b_0 instead.
+INFO:tensorflow:Summary name Conv2D_1/W:0 is illegal; using Conv2D_1/W_0 instead.
+INFO:tensorflow:Summary name Conv2D_1/b:0 is illegal; using Conv2D_1/b_0 instead.
+INFO:tensorflow:Summary name Conv2D_2/W:0 is illegal; using Conv2D_2/W_0 instead.
+INFO:tensorflow:Summary name Conv2D_2/b:0 is illegal; using Conv2D_2/b_0 instead.
+INFO:tensorflow:Summary name btc_bias:0 is illegal; using btc_bias_0 instead.
+INFO:tensorflow:Summary name gradients_1/Conv2D/Conv2D_grad/Conv2DBackpropFilter:0/gradient is illegal; using gradients_1/Conv2D/Conv2D_grad/Conv2DBackpropFilter_0/gradient instead.
+INFO:tensorflow:Summary name gradients_1/Conv2D/BiasAdd_grad/BiasAddGrad:0/gradient is illegal; using gradients_1/Conv2D/BiasAdd_grad/BiasAddGrad_0/gradient instead.
+INFO:tensorflow:Summary name gradients_1/AddN_2:0/gradient is illegal; using gradients_1/AddN_2_0/gradient instead.
+INFO:tensorflow:Summary name gradients_1/Conv2D_1/BiasAdd_grad/BiasAddGrad:0/gradient is illegal; using gradients_1/Conv2D_1/BiasAdd_grad/BiasAddGrad_0/gradient instead.
+INFO:tensorflow:Summary name gradients_1/AddN_1:0/gradient is illegal; using gradients_1/AddN_1_0/gradient instead.
+INFO:tensorflow:Summary name gradients_1/Conv2D_2/BiasAdd_grad/BiasAddGrad:0/gradient is illegal; using gradients_1/Conv2D_2/BiasAdd_grad/BiasAddGrad_0/gradient instead.
+INFO:tensorflow:Summary name gradients_1/Tile_grad/Sum:0/gradient is illegal; using gradients_1/Tile_grad/Sum_0/gradient instead.
+INFO:root:average time for data accessing is 1.0793209075927735e-06
+INFO:root:average time for training is 0.00012784266471862793
+INFO:root:==============================
+INFO:root:step 0
+INFO:root:------------------------------
+INFO:root:the portfolio value on test set is 1.8133423
+log_mean is 0.0002143989
+loss_value is -0.000214
+log mean without commission fee is 0.000239
+
+INFO:root:==============================
+
+INFO:root:average time for data accessing is 0.0011832311153411866
+INFO:root:average time for training is 0.007615976333618164
+INFO:root:==============================
+INFO:root:step 1000
+INFO:root:------------------------------
+INFO:root:the portfolio value on test set is 2.012817
+log_mean is 0.00025199365
+loss_value is -0.000252
+log mean without commission fee is 0.000302
+
+INFO:root:==============================
+

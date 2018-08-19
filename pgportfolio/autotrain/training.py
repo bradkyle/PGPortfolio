@@ -66,6 +66,7 @@ def train_all(processes=1, device="cpu"):
             p.start()
             pool.append(p)
         else:
+            print("Already trained nnagents in "+train_dir+": generate new or reinitialize agents to start again")
             continue
 
         # suspend if the processes are too many

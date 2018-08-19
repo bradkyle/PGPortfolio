@@ -13,9 +13,22 @@ MIN_NUM_PERIOD = 3
 
 
 class DataMatrices:
-    def __init__(self, start, end, period, batch_size=50, volume_average_days=30, buffer_bias_ratio=0,
-                 market="poloniex", coin_filter=1, window_size=50, feature_number=3, test_portion=0.15,
-                 portion_reversed=False, online=False, is_permed=False):
+    def __init__(self,
+                 start,
+                 end,
+                 period,
+                 batch_size=50,
+                 volume_average_days=30,
+                 buffer_bias_ratio=0,
+                 market="poloniex",
+                 coin_filter=1,
+                 window_size=50,
+                 feature_number=3,
+                 test_portion=0.15,
+                 portion_reversed=False,
+                 online=False,
+                 is_permed=False
+    ):
         """
         :param start: Unix time
         :param end: Unix time
@@ -41,16 +54,32 @@ class DataMatrices:
         self.__features = type_list
         self.feature_number = feature_number
         volume_forward = get_volume_forward(self.__end-start, test_portion, portion_reversed)
-        self.__history_manager = gdm.HistoryManager(coin_number=coin_filter, end=self.__end,
-                                                    volume_average_days=volume_average_days,
-                                                    volume_forward=volume_forward, online=online)
+
+
+        # TODO modify for other exchanges such as bitfinex, binance
         if market == "poloniex":
-            self.__global_data = self.__history_manager.get_global_panel(start,
-                                                                         self.__end,
-                                                                         period=period,
-                                                                         features=type_list)
+            self.__history_manager = gdm.HistoryManager(
+                coin_number=coin_filter,
+                end=self.__end,
+                volume_average_days=volume_average_days,
+                volume_forward=volume_forward,
+                online=online
+            )
+
+            self.__global_data = self.__history_manager.get_global_panel(
+                start,
+                self.__end,
+                period=period,
+                features=type_list
+            )
+        elif market == "binance":
+            raise NotImplementedError("Exchange binance functionality has not been implemented yet")
+        elif market == "bitfinex":
+            raise NotImplementedError("Exchange bitfinex functionality has not been implemented yet")
         else:
             raise ValueError("market {} is not valid".format(market))
+
+
         self.__period_length = period
         # portfolio vector memory, [time, assets]
         self.__PVM = pd.DataFrame(index=self.__global_data.minor_axis,
@@ -94,7 +123,8 @@ class DataMatrices:
         train_config = config["training"]
         start = parse_time(input_config["start_date"])
         end = parse_time(input_config["end_date"])
-        return DataMatrices(start=start,
+        return DataMatrices(
+                            start=start,
                             end=end,
                             market=input_config["market"],
                             feature_number=input_config["feature_number"],
@@ -108,7 +138,7 @@ class DataMatrices:
                             volume_average_days=input_config["volume_average_days"],
                             test_portion=input_config["test_portion"],
                             portion_reversed=input_config["portion_reversed"],
-                            )
+        )
 
     @property
     def global_matrix(self):

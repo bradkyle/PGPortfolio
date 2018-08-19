@@ -55,8 +55,13 @@ class HistoryManager:
         """
         start = int(start - (start%period))
         end = int(end - (end%period))
-        coins = self.select_coins(start=end - self.__volume_forward - self.__volume_average_days * DAY,
-                                  end=end-self.__volume_forward)
+
+        # Determine coins by volume
+        coins = self.select_coins(
+             start=end - self.__volume_forward - self.__volume_average_days * DAY,
+             end=end-self.__volume_forward
+        )
+
         self.__coins = coins
         for coin in coins:
             self.update_data(start, end, coin)
@@ -78,12 +83,12 @@ class HistoryManager:
                     # NOTE: transform the start date to end date
                     if feature == "close":
                         sql = ("SELECT date+300 AS date_norm, close FROM History WHERE"
-                               " date_norm>={start} and date_norm<={end}" 
+                               " date_norm>={start} and date_norm<={end}"
                                " and date_norm%{period}=0 and coin=\"{coin}\"".format(
                                start=start, end=end, period=period, coin=coin))
                     elif feature == "open":
                         sql = ("SELECT date+{period} AS date_norm, open FROM History WHERE"
-                               " date_norm>={start} and date_norm<={end}" 
+                               " date_norm>={start} and date_norm<={end}"
                                " and date_norm%{period}=0 and coin=\"{coin}\"".format(
                                start=start, end=end, period=period, coin=coin))
                     elif feature == "volume":

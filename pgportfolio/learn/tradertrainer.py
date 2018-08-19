@@ -52,6 +52,7 @@ class TraderTrainer:
         self.__snap_shot = self.train_config["snap_shot"]
         config["input"]["fake_data"] = fake_data
 
+        # Load data from Database into training frame for use
         self._matrix = DataMatrices.create_from_config(config)
 
         self.test_set = self._matrix.get_test_set()
@@ -242,4 +243,3 @@ class TraderTrainer:
         if int(index) > 0:
             dataframe.to_csv(csv_dir)
         return result
-

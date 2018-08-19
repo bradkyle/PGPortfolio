@@ -57,10 +57,12 @@ def main():
         else:
             for folder in options.folder:
                 raise NotImplementedError()
+
     elif options.mode == "generate":
         import pgportfolio.autotrain.generate as generate
         logging.basicConfig(level=logging.INFO)
         generate.add_packages(load_config(), int(options.repeat))
+
     elif options.mode == "download_data":
         from pgportfolio.marketdata.datamatrices import DataMatrices
         with open("./pgportfolio/net_config.json") as file:
@@ -79,13 +81,16 @@ def main():
                      is_permed=config["input"]["is_permed"],
                      test_portion=config["input"]["test_portion"],
                      portion_reversed=config["input"]["portion_reversed"])
+
     elif options.mode == "backtest":
         config = _config_by_algo(options.algo)
         _set_logging_by_algo(logging.DEBUG, logging.DEBUG, options.algo, "backtestlog")
         execute_backtest(options.algo, config)
+
     elif options.mode == "save_test_data":
         # This is used to export the test data
         save_test_data(load_config(options.folder))
+
     elif options.mode == "plot":
         logging.basicConfig(level=logging.INFO)
         algos = options.algos.split(",")
@@ -95,6 +100,7 @@ def main():
         else:
             labels = algos
         plot.plot_backtest(load_config(), algos, labels)
+
     elif options.mode == "table":
         algos = options.algos.split(",")
         if options.labels:
