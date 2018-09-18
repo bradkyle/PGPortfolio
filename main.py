@@ -58,8 +58,17 @@ def main():
             for folder in options.folder:
                 raise NotImplementedError()
 
+    if options.mode == "act":
+        import pgportfolio.autotrain.training
+        if not options.algo:
+            pgportfolio.autotrain.training.act_all(int(options.processes), options.device)
+        else:
+            for folder in options.folder:
+                raise NotImplementedError()
+
     elif options.mode == "generate":
         import pgportfolio.autotrain.generate as generate
+        print("Generating configuration...")
         logging.basicConfig(level=logging.INFO)
         generate.add_packages(load_config(), int(options.repeat))
 
@@ -70,7 +79,8 @@ def main():
         config = preprocess_config(config)
         start = time.mktime(datetime.strptime(config["input"]["start_date"], "%Y/%m/%d").timetuple())
         end = time.mktime(datetime.strptime(config["input"]["end_date"], "%Y/%m/%d").timetuple())
-        DataMatrices(start=start,
+        DataMatrices(
+                    start=start,
                      end=end,
                      feature_number=config["input"]["feature_number"],
                      window_size=config["input"]["window_size"],
@@ -80,7 +90,8 @@ def main():
                      coin_filter=config["input"]["coin_number"],
                      is_permed=config["input"]["is_permed"],
                      test_portion=config["input"]["test_portion"],
-                     portion_reversed=config["input"]["portion_reversed"])
+                     portion_reversed=config["input"]["portion_reversed"]
+        )
 
     elif options.mode == "backtest":
         config = _config_by_algo(options.algo)

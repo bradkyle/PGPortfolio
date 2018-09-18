@@ -15,10 +15,20 @@ class NeuralNetWork:
             tf_config.gpu_options.per_process_gpu_memory_fraction = 0
         else:
             tf_config.gpu_options.per_process_gpu_memory_fraction = 0.2
-        self.input_num = tf.placeholder(tf.int32, shape=[])
-        self.input_tensor = tf.placeholder(tf.float32, shape=[None, feature_number, rows, columns])
-        self.previous_w = tf.placeholder(tf.float32, shape=[None, rows])
+
+        # The number of features that each input consists of
+        self.input_num = tf.placeholder(tf.int32, shape=[], name="input_num")
+
+        # The current feature vector i.e. [batch * ["close", "high", "low"] * asset_number * window_size]
+        self.input_tensor = tf.placeholder(tf.float32, shape=[None, feature_number, rows, columns], name="input_tensor")
+
+        # The previous portfolio vector equal in length to the number of assets
+        self.previous_w = tf.placeholder(tf.float32, shape=[None, rows], name="previous_w")
+
+        # Rows is equal to asset number
         self._rows = rows
+
+        # columns is the size of a window
         self._columns = columns
 
         self.layers_dict = {}
@@ -32,7 +42,13 @@ class NeuralNetWork:
 
 class CNN(NeuralNetWork):
     # input_shape (features, rows, columns)
-    def __init__(self, feature_number, rows, columns, layers, device):
+    def __init__(self,
+     feature_number, 
+     rows, 
+     columns, 
+     layers, 
+     device
+     ):
         NeuralNetWork.__init__(self, feature_number, rows, columns, layers, device)
 
     def add_layer_to_dict(self, layer_type, tensor, weights=True):

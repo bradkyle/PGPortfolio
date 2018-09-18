@@ -1,13 +1,13 @@
 {
     "agent_type": "NNAgent",
     "input": {
-        "coin_number": 10,
+        "coin_number": 15,
         "end_date": "2018/07/01",
         "fake_ratio": 1,
         "feature_number": 3,
-        "global_period": 300,
+        "global_period": 900,
         "is_permed": false,
-        "market": "binance",
+        "market": "bitfinex_btc",
         "norm_method": "absolute",
         "online": false,
         "portion_reversed": false,
@@ -15,7 +15,7 @@
         "start_date": "2015/07/01",
         "test_portion": 0.08,
         "volume_average_days": 30,
-        "window_size": 31
+        "window_size": 90
     },
     "layers": [
         {
@@ -59,11 +59,12 @@
         "buffer_biased": 5e-05,
         "decay_rate": 1.0,
         "decay_steps": 50000,
+        "export_interval": 50000,
         "fast_train": true,
         "learning_rate": 0.00028,
         "loss_function": "loss_function6",
-        "snap_shot": false,
-        "steps": 200000,
+        "snap_shot": true,
+        "steps": 300000,
         "training_method": "Adam"
     }
 }

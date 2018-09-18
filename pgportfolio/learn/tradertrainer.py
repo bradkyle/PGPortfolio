@@ -41,6 +41,7 @@ class TraderTrainer:
         """
         self.config = config
         self.train_config = config["training"]
+        self.export_interval = self.train_config["export_interval"]
         self.input_config = config["input"]
         self.save_path = save_path
         self.best_metric = 0
@@ -56,12 +57,15 @@ class TraderTrainer:
         self._matrix = DataMatrices.create_from_config(config)
 
         self.test_set = self._matrix.get_test_set()
+
         if not config["training"]["fast_train"]:
             self.training_set = self._matrix.get_training_set()
+
         self.upperbound_validation = 1
         self.upperbound_test = 1
         tf.set_random_seed(self.config["random_seed"])
         self.device = device
+
         if agent:
             self._agent = agent
         else:
@@ -79,8 +83,14 @@ class TraderTrainer:
             feed = self.training_set
         else:
             raise ValueError()
-        result = self._agent.evaluate_tensors(feed["X"],feed["y"],last_w=feed["last_w"],
-                                              setw=feed["setw"], tensors=tensors)
+
+        result = self._agent.evaluate_tensors(
+            feed["X"],
+            feed["y"],
+            last_w=feed["last_w"],
+            setw=feed["setw"],
+            tensors=tensors
+        )
         return result
 
     @staticmethod
@@ -121,6 +131,7 @@ class TraderTrainer:
 
         if not self.__snap_shot:
             self._agent.save_model(self.save_path)
+
         elif v_pv > self.best_metric:
             self.best_metric = v_pv
             logging.info("get better model at %s steps,"
@@ -165,7 +176,11 @@ class TraderTrainer:
         upperbound_test = self.calculate_upperbound(self.test_set["y"])
         logging.info("upper bound in test is %s" % upperbound_test)
 
-    def train_net(self, log_file_dir="./tensorboard", index="0"):
+    def act(self):
+        x, _, last_w, _ = self.next_batch()
+        self._agent.act(x, last_w=last_w)
+
+    def train_net(self, log_file_dir="./tensorboard", model_path="./models", index="0"):
         """
         :param log_file_dir: logging of the training process
         :param index: sub-folder name under train_package
@@ -182,19 +197,31 @@ class TraderTrainer:
 
         total_data_time = 0
         total_training_time = 0
+
+        # Range over test sets
         for i in range(self.train_config["steps"]):
             step_start = time.time()
+
+            #
             x, y, last_w, setw = self.next_batch()
             finish_data = time.time()
             total_data_time += (finish_data - step_start)
+
             self._agent.train(x, y, last_w=last_w, setw=setw)
+
             total_training_time += time.time() - finish_data
+
+            # Log model status at specified interval
             if i % 1000 == 0 and log_file_dir:
                 logging.info("average time for data accessing is %s"%(total_data_time/1000))
                 logging.info("average time for training is %s"%(total_training_time/1000))
                 total_training_time = 0
                 total_data_time = 0
                 self.log_between_steps(i)
+
+            # Export model at specified interval    
+            if i % self.export_interval == 0 and i != 0:
+                self._agent.export_model(model_path+"/" +str(int(i/self.export_interval))+ "/")
 
         if self.save_path:
             self._agent.recycle()
@@ -204,6 +231,7 @@ class TraderTrainer:
         pv, log_mean = self._evaluate("test", self._agent.portfolio_value, self._agent.log_mean)
         logging.warning('the portfolio value train No.%s is %s log_mean is %s,'
                         ' the training time is %d seconds' % (index, pv, log_mean, time.time() - starttime))
+
 
         return self.__log_result_csv(index, time.time() - starttime)
 
@@ -217,11 +245,13 @@ class TraderTrainer:
                            self._agent.portfolio_value,
                            self._agent.log_mean,
                            self._agent.pv_vector,
-                           self._agent.log_mean_free)
+                           self._agent.log_mean_free
+            )
 
         backtest = backtest.BackTest(self.config.copy(),
                                      net_dir=None,
-                                     agent=self._agent)
+                                     agent=self._agent
+        )
 
         backtest.start_trading()
         result = Result(test_pv=[v_pv],
@@ -233,7 +263,8 @@ class TraderTrainer:
                         backtest_test_pv=[backtest.test_pv],
                         backtest_test_history=[''.join(str(e)+', ' for e in backtest.test_pc_vector)],
                         backtest_test_log_mean=[np.mean(np.log(backtest.test_pc_vector))],
-                        training_time=int(time))
+                        training_time=int(time)
+        )
         new_data_frame = pd.DataFrame(result._asdict()).set_index("net_dir")
         if os.path.isfile(csv_dir):
             dataframe = pd.read_csv(csv_dir).set_index("net_dir")

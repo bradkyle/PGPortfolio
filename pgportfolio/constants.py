@@ -2,11 +2,18 @@
 # -*- coding: utf-8 -*-
 from os import path
 
-DATABASE_DIR = path.realpath(__file__).\
+SQLITE_DATABASE_DIR = path.realpath(__file__).\
     replace('pgportfolio/constants.pyc','/database/Data.db').\
     replace("pgportfolio\\constants.pyc","database\\Data.db").\
     replace('pgportfolio/constants.py','/database/Data.db').\
     replace("pgportfolio\\constants.py","database\\Data.db")
+
+PARQUET_DATABASE_DIR = path.realpath(__file__).\
+    replace('pgportfolio/constants.pyc','/database/Data.parquet').\
+    replace("pgportfolio\\constants.pyc","database\\Data.parquet").\
+    replace('pgportfolio/constants.py','/database/Data.parquet').\
+    replace("pgportfolio\\constants.py","database\\Data.parquet")
+
 CONFIG_FILE_DIR = 'net_config.json'
 LAMBDA = 1e-4  # lambda in loss function 5 in training
    # About time
@@ -21,4 +28,3 @@ DAY = HOUR * 24
 YEAR = DAY * 365
    # trading table name
 TABLE_NAME = 'test'
-

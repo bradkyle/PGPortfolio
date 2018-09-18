@@ -99,7 +99,7 @@ def count_periods(start, end, period_length):
     :param start: unix time, excluded
     :param end: unix time, included
     :param period_length: length of the period
-    :return: 
+    :return:
     """
     return (int(end)-int(start)) // period_length
 
@@ -126,3 +126,17 @@ def panel_fillna(panel, type="bfill"):
             frames[item] = panel.loc[item].fillna(axis=1, method=type)
     return pd.Panel(frames)
 
+def frame_fillna(frame, type="bfill"):
+    """
+    fill nan along the 3rd axis
+    :param panel: the panel to be filled
+    :param type: bfill or ffill
+    """
+    frames = {}
+    for item in frame.items:
+        if type == "both":
+            frames[item] = frame.loc[item].fillna(axis=1, method="bfill").\
+                fillna(axis=1, method="ffill")
+        else:
+            frames[item] = frame.loc[item].fillna(axis=1, method=type)
+    return pd.DataFrame(frames)

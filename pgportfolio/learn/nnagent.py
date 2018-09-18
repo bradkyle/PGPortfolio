@@ -4,29 +4,54 @@ import tensorflow as tf
 import numpy as np
 from pgportfolio.constants import *
 import pgportfolio.learn.network as network
+import json
 
 class NNAgent:
-    def __init__(self, config, restore_dir=None, device="cpu"):
+    def __init__(
+            self,
+            config,
+            restore_dir=None,
+            device="cpu"
+    ):
         self.__config = config
         self.__coin_number = config["input"]["coin_number"]
-        self.__net = network.CNN(config["input"]["feature_number"],
-                                 self.__coin_number,
-                                 config["input"]["window_size"],
-                                 config["layers"],
-                                 device=device)
+
+        # Default network is CNN
+        # Input shape would be [3, 10, 100]
+        self.__net = network.CNN(
+                                feature_number=config["input"]["feature_number"], # e.g. 3: high, low, close
+                                rows=self.__coin_number, # 15 i.e. the number of assets to be traded
+                                columns=config["input"]["window_size"], 
+                                layers=config["layers"],
+                                device=device
+        )
+
+        #
         self.__global_step = tf.Variable(0, trainable=False)
         self.__train_operation = None
-        self.__y = tf.placeholder(tf.float32, shape=[None,
-                                                     self.__config["input"]["feature_number"],
-                                                     self.__coin_number])
+
+        # tensor containing the next feature vector from which
+        # rewards can be derived
+        self.__y = tf.placeholder(
+            tf.float32,
+            shape=[
+               None,
+               self.__config["input"]["feature_number"],
+               self.__coin_number
+            ]
+        )
+
         self.__future_price = tf.concat([tf.ones([self.__net.input_num, 1]),
                                        self.__y[:, 0, :]], 1)
         self.__future_omega = (self.__future_price * self.__net.output) /\
                               tf.reduce_sum(self.__future_price * self.__net.output, axis=1)[:, None]
         # tf.assert_equal(tf.reduce_sum(self.__future_omega, axis=1), tf.constant(1.0))
         self.__commission_ratio = self.__config["trading"]["trading_consumption"]
-        self.__pv_vector = tf.reduce_sum(self.__net.output * self.__future_price, reduction_indices=[1]) *\
+        self.__pv_vector = tf.reduce_sum(
+            self.__net.output * self.__future_price, reduction_indices=[1]) *\
                            (tf.concat([tf.ones(1), self.__pure_pc()], axis=0))
+
+        # Training Operations
         self.__log_mean_free = tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output * self.__future_price,
                                                                    reduction_indices=[1])))
         self.__portfolio_value = tf.reduce_prod(self.__pv_vector)
@@ -35,11 +60,14 @@ class NNAgent:
         self.__standard_deviation = tf.sqrt(tf.reduce_mean((self.__pv_vector - self.__mean) ** 2))
         self.__sharp_ratio = (self.__mean - 1) / self.__standard_deviation
         self.__loss = self.__set_loss_function()
-        self.__train_operation = self.init_train(learning_rate=self.__config["training"]["learning_rate"],
+        self.__train_operation = self.init_train(
+                                                 learning_rate=self.__config["training"]["learning_rate"],
                                                  decay_steps=self.__config["training"]["decay_steps"],
                                                  decay_rate=self.__config["training"]["decay_rate"],
-                                                 training_method=self.__config["training"]["training_method"])
+                                                 training_method=self.__config["training"]["training_method"]
+        )
         self.__saver = tf.train.Saver()
+
         if restore_dir:
             self.__saver.restore(self.__net.session, restore_dir)
         else:
@@ -149,6 +177,34 @@ class NNAgent:
         tflearn.is_training(True, self.__net.session)
         self.evaluate_tensors(x, y, last_w, setw, [self.__train_operation])
 
+    def act(self, x, last_w):
+        tflearn.is_training(False, self.__net.session)
+        output = self.__net.session.run(
+            fetches = [
+                self.__net.output
+            ],
+            feed_dict={
+                self.__net.input_tensor: x,
+                self.__net.previous_w: last_w,
+                self.__net.input_num: x.shape[0]
+            }
+        )
+        data = {}
+        data['instances']=[
+              {
+                'input_num':x.shape[0],
+                'previous_w':last_w.tolist(),
+                'input':x.tolist()
+                }
+        ]
+
+        print(x.size)
+
+        with open('data.json', 'w') as outfile:
+            json.dump(data, outfile)
+
+        print(output)
+
     def evaluate_tensors(self, x, y, last_w, setw, tensors):
         """
         :param x:
@@ -161,20 +217,63 @@ class NNAgent:
         tensors = list(tensors)
         tensors.append(self.__net.output)
         assert not np.any(np.isnan(x))
+        
+        #Test whether any array element along a given axis evaluates to True.
+        #Test element-wise for NaN and return result as a boolean array.
         assert not np.any(np.isnan(y))
         assert not np.any(np.isnan(last_w)),\
             "the last_w is {}".format(last_w)
-        results = self.__net.session.run(tensors,
-                                         feed_dict={self.__net.input_tensor: x,
+        results = self.__net.session.run(
+                                         tensors,
+                                         feed_dict={
+                                                    self.__net.input_tensor: x,
                                                     self.__y: y,
                                                     self.__net.previous_w: last_w,
-                                                    self.__net.input_num: x.shape[0]})
+                                                    self.__net.input_num: x.shape[0]
+                                         }
+        )
         setw(results[-1][:, 1:])
         return results[:-1]
 
     # save the variables path including file name
     def save_model(self, path):
         self.__saver.save(self.__net.session, path)
+
+    def export_model(self, path):
+        print('Exporting trained model to', path)
+        builder = tf.saved_model.builder.SavedModelBuilder(path)
+
+        input_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.input_tensor)
+        prev_w_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.previous_w)
+        input_num_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.input_num)
+        output_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.output)
+
+        portfolio_vector_signature = (
+            tf.saved_model.signature_def_utils.build_signature_def(
+                inputs={
+                    'input': input_tensor_info,
+                    'previous_w': prev_w_tensor_info,
+                    'input_num': input_num_tensor_info,
+                },
+                outputs={'output': output_tensor_info},
+                method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME
+            )
+        )
+
+        builder.add_meta_graph_and_variables(
+            self.session,
+            [tf.saved_model.tag_constants.SERVING],
+            signature_def_map={
+                'porfolio_vector':
+                portfolio_vector_signature,
+                tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY:
+                portfolio_vector_signature
+            }
+        )
+
+        builder.save()
+
+        print('Done exporting!')
 
     # consumption vector (on each periods)
     def __pure_pc(self):
@@ -208,6 +307,13 @@ class NNAgent:
         assert not np.any(np.isnan(history))
         tflearn.is_training(False, self.session)
         history = history[np.newaxis, :, :, :]
-        return np.squeeze(self.session.run(self.__net.output, feed_dict={self.__net.input_tensor: history,
-                                                                         self.__net.previous_w: last_w[np.newaxis, 1:],
-                                                                         self.__net.input_num: 1}))
+        return np.squeeze(
+            self.session.run(
+                self.__net.output,
+                feed_dict={
+                    self.__net.input_tensor: history,
+                    self.__net.previous_w: last_w[np.newaxis, 1:],
+                    self.__net.input_num: 1
+                }
+            )
+        )
