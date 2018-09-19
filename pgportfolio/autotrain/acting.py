@@ -10,7 +10,7 @@ from pgportfolio.learn.tradertrainer import TraderTrainer
 from pgportfolio.tools.configprocess import load_config
 
 
-def train_one(save_path, config, log_file_dir, index, logfile_level, console_level, device):
+def act_one(save_path, config, log_file_dir, index, logfile_level, console_level, device):
     """
     train an agent
     :param save_path: the path to save the tensorflow model (.ckpt), could be None
@@ -29,18 +29,15 @@ def train_one(save_path, config, log_file_dir, index, logfile_level, console_lev
         console = logging.StreamHandler()
         console.setLevel(console_level)
         logging.getLogger().addHandler(console)
-    print("training at %s started" % index)
+    print("acting at %s started" % index)
     return TraderTrainer(
         config,
         save_path=save_path+"/netfile",
         device=device
-    ).train_net(
-        log_file_dir=log_file_dir,
-        model_path = save_path+"/serving/"+config["input"]["market"]+"_"+str(config["input"]["window_size"]),
-        index=index
-    )
+    ).act()
 
-def train_all(processes=1, device="cpu"):
+
+def act_all(processes=1, device="cpu"):
     """
     train all the agents in the train_package folders
 
@@ -67,7 +64,7 @@ def train_all(processes=1, device="cpu"):
         # NOTE: logfile is for compatibility reason
         if not (os.path.isdir("./"+train_dir+"/"+dir+"/tensorboard") or os.path.isdir("./"+train_dir+"/"+dir+"/logfile")):
             p = Process(
-                target=train_one,
+                target=act_one,
                 args=(
                     "./" + train_dir + "/" + dir,
                     load_config(dir),
@@ -92,4 +89,3 @@ def train_all(processes=1, device="cpu"):
             if len(pool)<processes:
                 wait = False
     print("All the Tasks are Over")
-

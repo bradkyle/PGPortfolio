@@ -59,9 +59,17 @@ def main():
                 raise NotImplementedError()
 
     if options.mode == "act":
-        import pgportfolio.autotrain.training
+        import pgportfolio.autotrain.acting
         if not options.algo:
-            pgportfolio.autotrain.training.act_all(int(options.processes), options.device)
+            pgportfolio.autotrain.acting.act_all(int(options.processes), options.device)
+        else:
+            for folder in options.folder:
+                raise NotImplementedError()
+
+    if options.mode == "serve":
+        import pgportfolio.autotrain.serving
+        if not options.algo:
+            pgportfolio.autotrain.serving.act_all(int(options.processes), options.device, options.serving_model)
         else:
             for folder in options.folder:
                 raise NotImplementedError()

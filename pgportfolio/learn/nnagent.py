@@ -177,34 +177,6 @@ class NNAgent:
         tflearn.is_training(True, self.__net.session)
         self.evaluate_tensors(x, y, last_w, setw, [self.__train_operation])
 
-    def act(self, x, last_w):
-        tflearn.is_training(False, self.__net.session)
-        output = self.__net.session.run(
-            fetches = [
-                self.__net.output
-            ],
-            feed_dict={
-                self.__net.input_tensor: x,
-                self.__net.previous_w: last_w,
-                self.__net.input_num: x.shape[0]
-            }
-        )
-        data = {}
-        data['instances']=[
-              {
-                'input_num':x.shape[0],
-                'previous_w':last_w.tolist(),
-                'input':x.tolist()
-                }
-        ]
-
-        print(x.size)
-
-        with open('data.json', 'w') as outfile:
-            json.dump(data, outfile)
-
-        print(output)
-
     def evaluate_tensors(self, x, y, last_w, setw, tensors):
         """
         :param x:
@@ -239,13 +211,26 @@ class NNAgent:
     def save_model(self, path):
         self.__saver.save(self.__net.session, path)
 
+    def act(self, x, last_w):
+        tflearn.is_training(False, self.__net.session)
+        output = self.__net.session.run(
+            fetches = [
+                self.__net.output
+            ],
+            feed_dict={
+                self.__net.input_tensor: x,
+                self.__net.previous_w: last_w,
+                self.__net.input_num: x.shape[0]
+            }
+        )
+        return output
+
     def export_model(self, path):
         print('Exporting trained model to', path)
         builder = tf.saved_model.builder.SavedModelBuilder(path)
 
         input_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.input_tensor)
         prev_w_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.previous_w)
-        input_num_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.input_num)
         output_tensor_info = tf.saved_model.utils.build_tensor_info(self.__net.output)
 
         portfolio_vector_signature = (
@@ -253,7 +238,6 @@ class NNAgent:
                 inputs={
                     'input': input_tensor_info,
                     'previous_w': prev_w_tensor_info,
-                    'input_num': input_num_tensor_info,
                 },
                 outputs={'output': output_tensor_info},
                 method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME
@@ -266,13 +250,12 @@ class NNAgent:
             signature_def_map={
                 'porfolio_vector':
                 portfolio_vector_signature,
-                tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY:
-                portfolio_vector_signature
+                # tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY:
+                # portfolio_vector_signature
             }
         )
 
         builder.save()
-
         print('Done exporting!')
 
     # consumption vector (on each periods)

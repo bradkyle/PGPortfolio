@@ -16,8 +16,12 @@ class NeuralNetWork:
         else:
             tf_config.gpu_options.per_process_gpu_memory_fraction = 0.2
 
-        # The number of features that each input consists of
-        self.input_num = tf.placeholder(tf.int32, shape=[], name="input_num")
+        # Refers to batch size
+        # Seen as though the network is used online in production (without batch inference)
+        # a default value of 1 has been given such that batch training can occur without having
+        # to feed in a value for the input num during production in either tensorflow serving or
+        # google cloud machine learning engine.
+        self.input_num = tf.placeholder_with_default(1, shape=[], name="input_num")
 
         # The current feature vector i.e. [batch * ["close", "high", "low"] * asset_number * window_size]
         self.input_tensor = tf.placeholder(tf.float32, shape=[None, feature_number, rows, columns], name="input_tensor")

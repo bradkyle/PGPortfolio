@@ -178,7 +178,17 @@ class TraderTrainer:
 
     def act(self):
         x, _, last_w, _ = self.next_batch()
-        self._agent.act(x, last_w=last_w)
+        output = self._agent.act(x, last_w=last_w)
+        data = {}
+        data['instances']=[
+              {
+                'input_num':x.shape[0],
+                'previous_w':last_w.tolist(),
+                'input':x.tolist()
+                }
+        ]
+        with open('data.json', 'w') as outfile:
+            json.dump(data, outfile)
 
     def train_net(self, log_file_dir="./tensorboard", model_path="./models", index="0"):
         """
