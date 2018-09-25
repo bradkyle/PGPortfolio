@@ -1,0 +1,16 @@
+{
+    "extends": "eslint:recommended",
+    "parser": "babel-eslint",
+    "env": {
+        "es6": true,
+        "node": true,
+        "browser": true
+    },
+    "rules": {
+        "no-console": 0,
+        "object-curly-spacing": 0,
+        "no-spaced-func": 0,
+        "no-eval": 0,
+        "no-use-before-define": 0
+    }
+}

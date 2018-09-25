@@ -30,8 +30,9 @@ class NNAgent:
         self.__global_step = tf.Variable(0, trainable=False)
         self.__train_operation = None
 
-        # tensor containing the next feature vector from which
-        # rewards can be derived
+        # tensor containing the next feature vector
+        # (future price) from which future portfolio value
+        # and by extension future rewards can be derived.
         self.__y = tf.placeholder(
             tf.float32,
             shape=[
@@ -41,15 +42,44 @@ class NNAgent:
             ]
         )
 
-        self.__future_price = tf.concat([tf.ones([self.__net.input_num, 1]),
-                                       self.__y[:, 0, :]], 1)
+        # Creates a tensor consisting of the future price 
+        # relative to the base asset and the base asset
+        # itself which obviously is represented as 1
+        # the base currency herein is referenced as
+        # the first currency in the future price and by
+        # extension is also referenced as first asset
+        # in the output.
+        self.__future_price = tf.concat(
+            [
+                tf.ones([self.__net.input_num, 1]),
+                self.__y[:, 0, :]
+            ],
+            axis=1
+        )
+
+        # 
         self.__future_omega = (self.__future_price * self.__net.output) /\
                               tf.reduce_sum(self.__future_price * self.__net.output, axis=1)[:, None]
+
         # tf.assert_equal(tf.reduce_sum(self.__future_omega, axis=1), tf.constant(1.0))
+
+        # refers to the fee that the exchange will charge per transaction
         self.__commission_ratio = self.__config["trading"]["trading_consumption"]
-        self.__pv_vector = tf.reduce_sum(
-            self.__net.output * self.__future_price, reduction_indices=[1]) *\
-                           (tf.concat([tf.ones(1), self.__pure_pc()], axis=0))
+
+        self.__pv_vector = \
+        tf.reduce_sum(
+            self.__net.output * self.__future_price, 
+            reduction_indices=[1]
+        ) *\
+        (
+            tf.concat(
+                [
+                tf.ones(1), 
+                self.__pure_pc()
+                ],
+                axis=0
+            )
+        )
 
         # Training Operations
         self.__log_mean_free = tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output * self.__future_price,
