@@ -1,0 +1,27 @@
+{
+  "name": "env",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@google-cloud/debug-agent": "^3.0.0",
+    "@google-cloud/error-reporting": "^0.5.1",
+    "@google-cloud/logging": "^4.0.1",
+    "@google-cloud/logging-winston": "^0.9.1",
+    "@google-cloud/monitoring": "^0.6.0",
+    "@google-cloud/pubsub": "^0.20.1",
+    "ansicolor": "^1.1.77",
+    "as-table": "^1.0.36",
+    "bitfinex-api-node": "^2.0.0",
+    "ccxt": "^1.17.352",
+    "dotenv": "^6.0.0",
+    "googleapis": "^34.0.0",
+    "interval-promise": "^1.2.0",
+    "lodash": "^4.17.11",
+    "numjs": "^0.16.0",
+    "ololog": "^1.1.112",
+    "request": "^2.88.0",
+    "winston": "^3.1.0"
+  }
+}
