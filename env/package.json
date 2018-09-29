@@ -15,13 +15,22 @@
     "as-table": "^1.0.36",
     "bitfinex-api-node": "^2.0.0",
     "ccxt": "^1.17.352",
+    "chai-asserttype": "^1.0.5",
+    "cli-table": "^0.3.1",
     "dotenv": "^6.0.0",
     "googleapis": "^34.0.0",
     "interval-promise": "^1.2.0",
     "lodash": "^4.17.11",
     "numjs": "^0.16.0",
     "ololog": "^1.1.112",
+    "progress": "^2.0.0",
     "request": "^2.88.0",
     "winston": "^3.1.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^5.2.0",
+    "sinon": "^6.3.4"
   }
 }

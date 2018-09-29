@@ -1,6 +1,5 @@
 const util = require('util');
 const { google } = require('googleapis');
-const CONFIG = require('../config.js');
 
 const normalise = function(pv){
     var sum = pv.reduce((a, b) => a + b, 0);
@@ -9,7 +8,7 @@ const normalise = function(pv){
     });   
 }
 
-module.exports.get_action = async function(inp, prev_w) {      
+module.exports.get_action = async function(inp, prev_w, project, model, version) {      
     return new Promise((resolve, reject) => {
           google.auth.getApplicationDefault( (err, authClient, projectId) => {
               if (err) {
@@ -18,6 +17,7 @@ module.exports.get_action = async function(inp, prev_w) {
 
               } else {
 
+                 console.log("Getting Action Prediction From Trained Model ...");
                   var ml = google.ml({
                       version: 'v1',
                       auth: authClient
@@ -29,7 +29,7 @@ module.exports.get_action = async function(inp, prev_w) {
                  }]};
 
                   ml.projects.predict({
-                      name: util.format('projects/%s/models/%s/versions/%s', CONFIG.PROJECT, CONFIG.MODEL, CONFIG.VERSION),
+                      name: util.format('projects/%s/models/%s/versions/%s', project, model, version),
                       resource: instances
                   }, 
                   function(err, result) {
@@ -38,11 +38,12 @@ module.exports.get_action = async function(inp, prev_w) {
                       }
 
                       try{
-
-                        let output = result.data["predictions"][0]["output"];
-                        resolve(output);    
+                        let output = result.data["predictions"][0]["output"];                                        
+                        return resolve(output);  
+                        
                       } catch (error){
-                          console.log(result.data);
+                          console.error("Model Output Was Invalid");
+                          console.log(result);
                           return reject(err);
                       }                                          
                  });

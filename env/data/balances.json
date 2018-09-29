@@ -1,0 +1,12 @@
+
+[
+    {"type":"exchange","currency":"bch","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"btc","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"btg","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"eos","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"etc","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"eth","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"ltc","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"mkr","amount":"1.0","available":"1.0"},
+    {"type":"exchange","currency":"xrp","amount":"1.0","available":"1.0"}
+]

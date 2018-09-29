@@ -7,6 +7,7 @@ if (process.env.NODE_ENV !== 'production'){
 const CONFIG = {
     INTERVAL: process.env.INTERVAL,
     QUOTE_ASSET: process.env.QUOTE_ASSET,
+    CASH_ASSET: process.env.CASH_ASSET,
     ASSET_NUM: process.env.ASSET_NUM,
     HISTORIC_SIZE: process.env.HISTORIC_SIZE,
     FEATURE_NUM: process.env.FEATURE_NUM,
