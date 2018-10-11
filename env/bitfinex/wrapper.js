@@ -131,7 +131,8 @@ const create_orders_from_pv = async function(client, pv, total_balance, assets) 
             // asset that can be bought with 1 QUOTE_ASSET
             let portion = (ps * total_balance);
             if (portion >= total_balance) {
-                portion=total_balance - (total_balance * 0.85);
+                console.log("Amount too high");
+                portion=total_balance - (total_balance * 0.80);
             } 
             //TODO fix pricing issue
             // Should exit at market price plus 0.2 referenced

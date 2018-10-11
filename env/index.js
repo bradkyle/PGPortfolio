@@ -90,10 +90,8 @@ const step = async function() {
 
 async function main() {
     console.log("Starting ...");
-   
-    let prev_w = nj.random([CONFIG.ASSET_NUM]).tolist();
-
     await step();
+    
 
     interval(
         async () => {        
