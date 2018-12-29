@@ -6,11 +6,11 @@ import time
 from argparse import ArgumentParser
 from datetime import datetime
 
-from pgportfolio.tools.configprocess import preprocess_config
-from pgportfolio.tools.configprocess import load_config
-from pgportfolio.tools.trade import save_test_data
-from pgportfolio.tools.shortcut import execute_backtest
-from pgportfolio.resultprocess import plot
+from axiom.tools.configprocess import preprocess_config
+from axiom.tools.configprocess import load_config
+from axiom.tools.trade import save_test_data
+from axiom.tools.shortcut import execute_backtest
+from axiom.resultprocess import plot
 
 
 def build_parser():
@@ -38,7 +38,7 @@ def build_parser():
     parser.add_argument("--device", dest="device", default="cpu",
                         help="device to be used to train")
     parser.add_argument("--folder", dest="folder", type=int,
-                        help="folder(int) to load the config, neglect this option if loading from ./pgportfolio/net_config")
+                        help="folder(int) to load the config, neglect this option if loading from ./axiom/net_config")
     return parser
 
 
@@ -51,38 +51,38 @@ def main():
         os.makedirs("./" + "database")
 
     if options.mode == "train":
-        import pgportfolio.autotrain.training
+        import axiom.autotrain.training
         if not options.algo:
-            pgportfolio.autotrain.training.train_all(int(options.processes), options.device)
+            axiom.autotrain.training.train_all(int(options.processes), options.device)
         else:
             for folder in options.folder:
                 raise NotImplementedError()
 
     if options.mode == "act":
-        import pgportfolio.autotrain.acting
+        import axiom.autotrain.acting
         if not options.algo:
-            pgportfolio.autotrain.acting.act_all(int(options.processes), options.device)
+            axiom.autotrain.acting.act_all(int(options.processes), options.device)
         else:
             for folder in options.folder:
                 raise NotImplementedError()
 
     if options.mode == "serve":
-        import pgportfolio.autotrain.serving
+        import axiom.autotrain.serving
         if not options.algo:
-            pgportfolio.autotrain.serving.act_all(int(options.processes), options.device, options.serving_model)
+            axiom.autotrain.serving.act_all(int(options.processes), options.device, options.serving_model)
         else:
             for folder in options.folder:
                 raise NotImplementedError()
 
     elif options.mode == "generate":
-        import pgportfolio.autotrain.generate as generate
+        import axiom.autotrain.generate as generate
         print("Generating configuration...")
         logging.basicConfig(level=logging.INFO)
         generate.add_packages(load_config(), int(options.repeat))
 
     elif options.mode == "download_data":
-        from pgportfolio.marketdata.datamatrices import DataMatrices
-        with open("./pgportfolio/net_config.json") as file:
+        from axiom.marketdata.datamatrices import DataMatrices
+        with open("./axiom/net_config.json") as file:
             config = json.load(file)
         config = preprocess_config(config)
         start = time.mktime(datetime.strptime(config["input"]["start_date"], "%Y/%m/%d").timetuple())

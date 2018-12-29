@@ -2052,6 +2052,7 @@ number-to-bn@1.7.0:
 numjs@^0.16.0:
   version "0.16.0"
   resolved "https://registry.yarnpkg.com/numjs/-/numjs-0.16.0.tgz#4084bfa3333300a304d51ac296c95036e7215956"
+  integrity sha512-tHox7YEGj/TmgTR0grpIrjp+zon5eoFhREa6ipgajOUkHiWF7EwhkfN2OxpE1BZkyLgp7T5zlWQnY0XhYYt7Og==
   dependencies:
     cwise "^1.0.8"
     deasync "^0.1.4"
@@ -2519,6 +2520,11 @@ rlp@^2.0.0:
   resolved "https://registry.yarnpkg.com/rlp/-/rlp-2.1.0.tgz#e4f9886d5a982174f314543831e36e1a658460f9"
   dependencies:
     safe-buffer "^5.1.1"
+
+round-to@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/round-to/-/round-to-3.0.0.tgz#f457177d68e5a1d9d55796528cd03daea0bb4fb9"
+  integrity sha512-h8xeIC7dRHkY++BGKtXTlO/FifRJdUmW5YObBk/8X9nc/2syNXKN8qUA6OvCgmPdtYlWvDqKZOuxz/CX6dcZNg==
 
 run-async@^2.2.0:
   version "2.3.0"

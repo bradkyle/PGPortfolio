@@ -1,4 +1,4 @@
-name: pgportfolio
+name: axiom
 channels:
   - anaconda
   - conda-forge
