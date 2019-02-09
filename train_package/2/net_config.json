@@ -1,7 +1,7 @@
 {
     "agent_type": "NNAgent",
     "input": {
-        "coin_number": 15,
+        "coin_number": 31,
         "end_date": "2018/07/01",
         "fake_ratio": 1,
         "feature_number": 3,
@@ -52,7 +52,7 @@
         "buffer_biased": 5e-05,
         "learning_rate": 0.00028,
         "rolling_training_steps": 85,
-        "trading_consumption": 0.0025
+        "trading_consumption": 0.0060
     },
     "training": {
         "batch_size": 109,
@@ -64,7 +64,7 @@
         "learning_rate": 0.00028,
         "loss_function": "loss_function6",
         "snap_shot": true,
-        "steps": 300000,
+        "steps": 51000,
         "training_method": "Adam"
     }
 }

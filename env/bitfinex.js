@@ -41,33 +41,35 @@ const create_pv_table = async function(assets, pv){
 const step = async function() {
     // SHOw PROGRESS BAR
 
-    // GET  TOP VOLUMED ASSETS IN LAST 24 HOURS
+    // GET  TOP VOLUMED ASSETS IN LAST 24 HOURS (change)
     let top_assets = await get_top_assets(client, CONFIG.QUOTE_ASSET, CONFIG.ASSET_NUM);
 
     // GET CURRENT PORTFOLIO VECTOR
-    let prev_pv = await get_pv(client, top_assets, CONFIG.QUOTE_ASSET);
+    let current_pv = await get_pv_object(client, top_assets, CONFIG.QUOTE_ASSET);
 
     // GET FEATURE FRAME
     var feature_frame = await get_feature_frame(client, top_assets, CONFIG.HISTORIC_SIZE);
 
     // GET PREDICTION FROM GOOGLE CLOUD MACHINE LEARNING ENGINE
-    var action_pv = await get_action(feature_frame, prev_pv, CONFIG.PROJECT, CONFIG.MODEL, CONFIG.VERSION);
+    var target_pv = await get_action(feature_frame, prev_pv, CONFIG.PROJECT, CONFIG.MODEL, CONFIG.VERSION);
 
-    // CANCEL ALL ORDERS
-    await client.cancel_all_orders();
-    // console.log("All orders cancelled");
-
-    // RESET BALANCES TO QUOTE ASSET FOR REDISTRIBUTION
-    await reset_position(client, CONFIG.QUOTE_ASSET);
-
-    // GET CURRENT PORTFOLIO VALUE IN DOLLARS
-    var portfolio_value = await get_portfolio_value(client, top_assets, CONFIG.CASH_ASSET, CONFIG.QUOTE_ASSET);
 
     // CONSTRUCT PV FROM ACTION PV (SLICE ACTION PV)
     var pv = nj.array(action_pv).slice(-CONFIG.ASSET_NUM).tolist();
 
+
+    // GET CURRENT PORTFOLIO VALUE IN DOLLARS
+    var portfolio_value = await get_portfolio_value(client, top_assets, CONFIG.CASH_ASSET, CONFIG.QUOTE_ASSET);
+
+
+    // CANCEL ALL ORDERS
+    await client.cancel_all_orders();
+
+    
+    let transactions = derive_transactions(current_pv, target_pv, );
+
     // MAKE NEW ORDERS BASED ON PORTFOLIO WEIGHT VECTOR
-    await execute_position(client, pv, top_assets, CONFIG.QUOTE_ASSET);
+    await execute_transactions(client, norm_transactions);
 
     // GET AND RETURN INFORMATION SUCH AS PROFIT AND POSITION
     var stats_table = new Table();

@@ -3,9 +3,11 @@ const roundTo = require('round-to');
 // Recieves 2 portfolio vectors: 
 // i: initial/current portfolio vector
 // f: final/target portfolio vector
+// And a quotation object referencing the quantity of
+// the asset in question that should be sold.
 // and derives the transactions that need to occur
 // in order to  
-function derive_transactions(i, f) {
+function derive_transactions(i, f, q) {
     
     // TODO round off initial and final objects    
     
@@ -22,14 +24,11 @@ function derive_transactions(i, f) {
     if (!is_zero(d)) {
         console.error("The sum of the delta portfolio vector is not 1: " + sum(d).toString())
     }
-  
-    console.log(d);
     
     // generate a set of transactions to be fulfilled.
-    let t = generate_transactions(d);
-    console.log(t);
+    let t = generate_transactions(d, q);
     
-    
+    return t;
 }
 
 function derive_delta_pv(i, f) {
@@ -106,7 +105,70 @@ function is_zero(obj) {
 
 // Generates a set of transactions(orders) that should take place
 // based upon a delta portfolio vector.
-function generate_transactions(d) {
+function generate_transactions(d, q) {
+    
+    let transaction_heap = new Heap();
+    let buy_heap = new Heap();
+    let sell_heap = new Heap();
+    
+    // generate buy and sell sets from
+    // delta portfolio vector.
+    let buy_pv = buy_heap.fill(get_positive(d)); // buy heap
+    let sell_pv = sell_heap.fill(get_negative(d)); // sell heap
+   
+    while(buy_heap.next()){
+        // get next item in buy heap
+        let b = buy_heap.next();
+        
+        while(!satisfied) {
+            
+            // get next item in sell heap
+            let s = sell_heap.next()
+            if (b.value === Math.abs(s.value)) {
+                
+                transaction_heap.add(
+                ,    
+                {
+                
+                }
+                )
+                
+                buy_heap.remove(b);
+                sell_heap.remove(s);
+            
+                satisfied = true;
+                 
+            } else if(b.value > Math.abs(s.value)) {
+                
+                buy_heap.update(b.key, (b.value + s.value));
+                
+                transaction_heap.add({
+                    
+                })
+                
+                sell_heap.remove(s);
+                
+            } else {
+                
+                sell_heap.update(s.key, (s.value + b.value));
+                
+                transaction_heap.add({
+                    
+                });
+                
+                buy_heap.remove(b);
+                
+                satisfied = true;    
+            }
+        }
+    }
+    
+    return transaction_heap.arroutput();    
+}
+
+// Generates a set of transactions(orders) that should take place
+// based upon a delta portfolio vector.
+function generate_transactions_adj(d, q) {
     
     let transaction_heap = new Heap();
     let buy_heap = new Heap();

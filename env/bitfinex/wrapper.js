@@ -1,7 +1,6 @@
+
 const CONFIG = require('../config.js');
 const nj = require("numjs");
-
-
 
 // Top Volumed Assets
 // ----------------------------------------------------------------------------------------------------------------->
@@ -10,10 +9,15 @@ const nj = require("numjs");
 // Return the amount of base currency that can be bought with one 
 // quote currency
 const get_top_assets = async function(client, quote_asset, asset_num) {
-    console.log('Retrieving top assets ...');
 
     let tickers = await client.get_tickers();
     
+    return (await get_top_assets_from_tickers(tickers, quote_asset, asset_num))[0];
+}
+
+// 
+const get_top_assets_from_tickers = async function(tickers, quote_asset, asset_num) {
+
     // get all tickers with the respective quote asset
     tickers = tickers.filter(function(ticker){
         return ticker[0].endsWith(quote_asset);
@@ -34,7 +38,7 @@ const get_top_assets = async function(client, quote_asset, asset_num) {
         return ticker[0].substr(1);
     });
     
-    return top_assets;
+    return [top_assets, tickers];
 }
 
 // Get a Feature frame Derived From Candle Charts
@@ -51,15 +55,20 @@ const get_col = async function(arr,index) {
 
 // sends ASSET_NUM (15) requests to bitfinex per invocation
 const get_feature_frame = async function(client, assets, historic_size) {  
-    console.log('Retrieving Feature Frame ...');  
     var close = [];
     var high = [];
     var low = [];
     var frame = [];
     
     for (var i=0;i<assets.length;i++) {
+
+        // Get the candle stick chart for each asset
         let ohlc = await client.get_ohlc( 't'+assets[i]);
+
+        // Slice response based on historic size
         ohlc = nj.array(ohlc).slice([historic_size]).tolist();
+
+        // Convert the candlestick charts to input
         close[i] = await get_col(ohlc, 2);
         high[i] = await get_col(ohlc, 3);
         low[i] =  await get_col(ohlc, 4);          
@@ -75,8 +84,7 @@ const get_feature_frame = async function(client, assets, historic_size) {
 // Position Execution
 // ----------------------------------------------------------------------------------------------------------------->
 
-const execute_position = async function(client, pv, assets, quote_asset) {   
-    console.log('Executing Portfolio Action Vector ...');
+const execute_position = async function(client, pv, assets, quote_asset) {  
     // Get Available balances in exchange account
     const balances = await client.get_balances();  
 
@@ -94,6 +102,7 @@ const execute_position = async function(client, pv, assets, quote_asset) {
     await client.place_multiple_orders(orders);
 }
 
+// TODO fortify
 const get_total_balance = function(balances, quote_asset) {
      // Determines total balance left in QUOTE_ASSET
     balances = balances
@@ -106,6 +115,8 @@ const get_total_balance = function(balances, quote_asset) {
     }
     return total_balance;
 }
+
+
 
 const clean_execution_orders = async function(client, orders) {     
     let symbols_details = await client.get_symbols_details();    
@@ -139,6 +150,7 @@ const create_orders_from_pv = async function(client, pv, total_balance, assets) 
             // 
             let amount =  (portion * (1/last_price));
 
+            // TODO change to limit based upon 
             return {
                   symbol: symbol,
                   amount: amount,
@@ -202,20 +214,35 @@ const create_orders_from_balances = async function(balances, quote_asset) {
 const get_portfolio_value = async function(client, assets, cash_asset, quote_asset) {
     console.log('Getting Current Value of Portfolio...');
     let symbol = quote_asset+cash_asset;
-    console.log(symbol);
+
+    // Get the bitfinex balances from client
     var balances = await client.get_balances();   
+
+    // Convert the balances to a 
     var balances_norm = await derive_balances_norm(client, assets, balances);
+
+
     let total_balances_norm =  balances_norm.reduce((sum, balance) => sum + balance);
+
+
     let price = await client.get_last_price(symbol);
+
     return parseFloat(total_balances_norm) * parseFloat(price);
 }
 
 // Sends 1 + 15 requests to bitfinex per invocation
 const get_pv = async function(client, assets, quote_asset) {
     console.log('Deriving Portfolio Vector...');
-    var balances = await client.get_balances();  
+
+    // get balances from client
+    var balances = await client.get_balances(); 
+    
+    // Get the normalised fraction the balance represents in the portfolio
     var balances_norm = await derive_balances_norm(client, assets, balances, quote_asset);
-    var pv = await derive_pv(assets, balances_norm);
+    
+    //
+    var pv = await derive_pv(balances_norm, assets);
+
     return pv;
 }
 
@@ -234,18 +261,22 @@ const derive_pv = async function(balances_norm){
     return pv;
 }
 
+
+// TODO fix
+// Gets the exchange rate of each currency and 
 const derive_balances_norm = async function(client, assets, balances, quote_asset) {
     balances_norm = [];
     for (var i=0;i<assets.length;i++){
           let balance =  balances
            .filter(({type}) => type === 'exchange')
            .filter(({currency}) => currency === derive_currency(assets[i], quote_asset));
-           let value = await derive_balance_value(client, balance[0], quote_asset);
-           if(value !== undefined) {  
-                 balances_norm[i] = value;
-           } else {
-                 balances_norm[i] = 0;
-           }
+          let value = await derive_balance_value(client, balance[0], quote_asset);
+
+          if(value !== undefined) {  
+                    balances_norm[i] = value;
+          } else {
+                    balances_norm[i] = 0;
+          }
     }
     return balances_norm;
 }
@@ -261,7 +292,7 @@ const derive_balance_value = async function(client, balance, quote_asset) {
 }
 
 const derive_currency = function(symbol, quote_asset){
-    return symbol.substring(0,symbol.indexOf(quote_asset)).toLowerCase();
+    return symbol.toString().substring(0,symbol.indexOf(quote_asset)).toLowerCase();
 }
 
 const derive_symbol = function(currency, quote_asset){

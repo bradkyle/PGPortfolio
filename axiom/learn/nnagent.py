@@ -82,8 +82,7 @@ class NNAgent:
         )
 
         # Training Operations
-        self.__log_mean_free = tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output * self.__future_price,
-                                                                   reduction_indices=[1])))
+        self.__log_mean_free = tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output * self.__future_price, reduction_indices=[1])))
         self.__portfolio_value = tf.reduce_prod(self.__pv_vector)
         self.__mean = tf.reduce_mean(self.__pv_vector)
         self.__log_mean = tf.reduce_mean(tf.log(self.__pv_vector))

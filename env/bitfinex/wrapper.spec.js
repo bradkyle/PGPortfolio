@@ -42,11 +42,11 @@ const assets = [
 
 const client = new BitfinexClient(CONFIG.BITFINEX_KEY, CONFIG.BITFINEX_SECRET);
 
-const symbols_details_resp = JSON.parse(fs.readFileSync('./data/symbols_details.json', 'utf8'));
-const balance_resp = JSON.parse(fs.readFileSync('./data/balances.json', 'utf8'));
-const tickers_resp = JSON.parse(fs.readFileSync('./data/tickers.json', 'utf8'));
-const ohlc_resp = JSON.parse(fs.readFileSync('./data/ohlc.json', 'utf8'));
-const example_orders = JSON.parse(fs.readFileSync('./data/orders.json', 'utf8'));
+const symbols_details_resp = JSON.parse(fs.readFileSync('../data/symbols_details.json', 'utf8'));
+const balance_resp = JSON.parse(fs.readFileSync('../data/balances.json', 'utf8'));
+const tickers_resp = JSON.parse(fs.readFileSync('../data/tickers.json', 'utf8'));
+const ohlc_resp = JSON.parse(fs.readFileSync('../data/ohlc.json', 'utf8'));
+const example_orders = JSON.parse(fs.readFileSync('../data/orders.json', 'utf8'));
 
 describe('bitfiex wrapper funcitonality', () => {
     var get_last_price = sinon.stub(BitfinexClient.prototype, 'get_last_price');
@@ -61,6 +61,14 @@ describe('bitfiex wrapper funcitonality', () => {
 
     var symbols_details = sinon.stub(BitfinexClient.prototype, 'get_symbols_details');
     symbols_details.returns(symbols_details_resp);
+
+
+    describe.skip("get top assets", () => {
+        it("generates a portfolio vector representing the distribution of available balances", async () => {
+            let top_assets = await get_top_assets(client, CONFIG.QUOTE_ASSET, 15);
+            expect(top_assets).to.eql(assets);
+        });
+    });
 
     describe("get col", () => {
         it("returns a column from a 2D array", async () => {
@@ -95,11 +103,29 @@ describe('bitfiex wrapper funcitonality', () => {
         });
     });
 
+    // TODO fortify
+    describe("execute position", () => {
+        it("recieves a portfolio vector action from a model and", async () => {
+            
+            var place_multiple_orders = sinon.stub(BitfinexClient.prototype, 'place_multiple_orders');
+            place_multiple_orders.returns("hello");
+
+            let pv = nj.random([15]).tolist();
+
+            await execute_position(client, pv, assets, 'BTC')
+
+            place_multiple_orders.restore();
+        });
+    });
+
+    // TODO fortify
     describe("get total balance", () => {
         it("calculates total balance from an array of balance objects",async  () => {
             
             let total_balance = get_total_balance(balance_resp, 'BTC');
             expect(total_balance).to.be.number();
+            console.log(total_balance);
+            expect(total_balance).to.eql(9.0);
 
             
         });
@@ -122,19 +148,6 @@ describe('bitfiex wrapper funcitonality', () => {
         });
     });
 
-    describe("execute position", () => {
-        it("recieves a portfolio vector action from a model and", async () => {
-            
-            var place_multiple_orders = sinon.stub(BitfinexClient.prototype, 'place_multiple_orders');
-            place_multiple_orders.returns("hello");
-
-            let pv = nj.random([15]).tolist();
-
-            await execute_position(client, pv, assets, 'BTC')
-
-            place_multiple_orders.restore();
-        });
-    });
 
     describe("clean reset orders", () => {
         it("removes any invalid orders from an order execution array before being sent",async  () => {
@@ -152,12 +165,6 @@ describe('bitfiex wrapper funcitonality', () => {
         });
     });
 
-    describe.skip("get top assets", () => {
-        it("generates a portfolio vector representing the distribution of available balances", async () => {
-            let top_assets = await get_top_assets(client, CONFIG.QUOTE_ASSET, 15);
-            expect(top_assets).to.eql(assets);
-        });
-    });
 
     describe("derive pv", () => {
         it("generates a portfolio vector representing the distribution of available balances", async () => {

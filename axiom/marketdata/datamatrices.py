@@ -28,7 +28,9 @@ class DataMatrices:
                  portion_reversed=False,
                  online=False,
                  is_permed=False,
-                 type_list = None
+                 type_list = None,
+                 db_table="Bitfinex_BTC",
+                 db_file="BitfinexData.db"
     ):
         print(period)
         """
@@ -61,38 +63,19 @@ class DataMatrices:
         print(market)
         market=market.strip()
         # References the exchange with the respective basal currency
-        if market == "poloniex_btc":            
-            self.__history_manager = gdm.HistoryManager(
-                coin_number=coin_filter,
-                end=self.__end,
-                volume_average_days=volume_average_days,
-                volume_forward=volume_forward,
-                online=online,
-                table="Poloniex_BTC"
-            )
-            
-        elif market == "bitfinex_btc":            
-            self.__history_manager = gdm.HistoryManager(
-                coin_number=coin_filter,
-                end=self.__end,
-                volume_average_days=volume_average_days,
-                volume_forward=volume_forward,
-                online=online,
-                table="Bitfinex_BTC"
-            )
-            
-        elif market == "bitfinex_usd":            
-            self.__history_manager = gdm.HistoryManager(
-                coin_number=coin_filter,
-                end=self.__end,
-                volume_average_days=volume_average_days,
-                volume_forward=volume_forward,
-                online=online,
-                table="Bitfinex_USD"
-            )
 
-        else:
-            raise ValueError("market {} is not valid".format(market))
+        print(db_table);
+        print(db_file)
+        
+        self.__history_manager = gdm.HistoryManager(
+            coin_number=coin_filter,
+            end=self.__end,
+            volume_average_days=volume_average_days,
+            volume_forward=volume_forward,
+            online=online,
+            table=db_table,
+            db_file=db_file
+        )
             
         self.__global_data = self.__history_manager.get_global_panel(
                 start,
@@ -152,21 +135,24 @@ class DataMatrices:
         end = parse_time(input_config["end_date"])
         print(start)
         print(end)
+        print(input_config["db_file"])
         return DataMatrices(
-                            start=start,
-                            end=end,
-                            market=input_config["market"],
-                            feature_number=input_config["feature_number"],
-                            window_size=input_config["window_size"],
-                            online=input_config["online"],
-                            period=input_config["global_period"],
-                            coin_filter=input_config["coin_number"],
-                            is_permed=input_config["is_permed"],
-                            buffer_bias_ratio=train_config["buffer_biased"],
-                            batch_size=train_config["batch_size"],
-                            volume_average_days=input_config["volume_average_days"],
-                            test_portion=input_config["test_portion"],
-                            portion_reversed=input_config["portion_reversed"],
+            start=start,
+            end=end,
+            market=input_config["market"],
+            feature_number=input_config["feature_number"],
+            window_size=input_config["window_size"],
+            online=input_config["online"],
+            period=input_config["global_period"],
+            coin_filter=input_config["coin_number"],
+            is_permed=input_config["is_permed"],
+            buffer_bias_ratio=train_config["buffer_biased"],
+            batch_size=train_config["batch_size"],
+            volume_average_days=input_config["volume_average_days"],
+            test_portion=input_config["test_portion"],
+            portion_reversed=input_config["portion_reversed"],
+            db_table=input_config["db_table"],
+            db_file=input_config["db_file"]
         )
 
     @property
