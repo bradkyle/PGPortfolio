@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from axiom.trade import trader
-from axiom.marketdata.datamatrices import DataMatrices
+from axiom.marketdata.dmat import DataMatrices
 import logging
 from axiom.tools.trade import calculate_pv_after_commission
 

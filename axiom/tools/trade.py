@@ -1,41 +1,41 @@
 from __future__ import division,absolute_import,print_function
 import numpy as np
-from axiom.marketdata.datamatrices import DataMatrices
-from axiom.marketdata.globaldatamatrix import HistoryManager
+from axiom.marketdata.dmat import DataMatrices
+from axiom.marketdata.gdmx import BQHistoryManager
 from axiom.tools.configprocess import parse_time
 from axiom.constants import *
 from axiom.tools.data import get_volume_forward
 from time import time
 
 
-def get_asset_name_list(config, online):
-    """
-    :param online: boolean value to show if connected to internet,
-    if False, load data from database.
-    :return : list of asset names
-    """
-    input_config = config["input"]
-    if not online:
-        start = parse_time(input_config["start_date"])
-        end = parse_time(input_config["end_date"])
-        volume_forward = get_volume_forward(end - start,
-                                            input_config["test_portion"]
-                                            + input_config["validation_portion"],
-                                            input_config["portion_reversed"])
-    else:
-        end = time()
-        volume_forward = 0
-    end = end - (end % input_config["trade_period"])
-    start = end - volume_forward - input_config["volume_average_days"] * DAY
-    end = end - volume_forward
-    assets = HistoryManager(
-                          input_config["asset_number"],
-                          end,
-                           volume_forward=volume_forward,
-                           volume_average_days=input_config["volume_average_days"],
-                           online=online).\
-        select_assets(start, end)
-    return assets
+# def get_asset_name_list(config, online):
+#     """
+#     :param online: boolean value to show if connected to internet,
+#     if False, load data from database.
+#     :return : list of asset names
+#     """
+#     input_config = config["input"]
+#     if not online:
+#         start = parse_time(input_config["start_date"])
+#         end = parse_time(input_config["end_date"])
+#         volume_forward = get_volume_forward(end - start,
+#                                             input_config["test_portion"]
+#                                             + input_config["validation_portion"],
+#                                             input_config["portion_reversed"])
+#     else:
+#         end = time()
+#         volume_forward = 0
+#     end = end - (end % input_config["trade_period"])
+#     start = end - volume_forward - input_config["volume_average_days"] * DAY
+#     end = end - volume_forward
+#     assets = BQHistoryManager(
+#                           input_config["asset_number"],
+#                           end,
+#                            volume_forward=volume_forward,
+#                            volume_average_days=input_config["volume_average_days"],
+#                            online=online).\
+#         select_assets(start, end)
+#     return assets
 
 
 def calculate_pv_after_commission(w1, w0, commission_rate):

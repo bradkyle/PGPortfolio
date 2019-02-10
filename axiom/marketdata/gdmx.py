@@ -105,7 +105,9 @@ class BQHistoryManager:
         frame=frame.groupby(['base_asset','timestamp_ms']).first()
         ind = pd.MultiIndex.from_product([frame.index.levels[0], time_index], names=frame.index.names)
         frame = frame.reindex(ind)
-        frame = frame.fillna(axis=1, method="bfill").fillna(axis=1, method="ffill")
+
+        # TODO check
+        frame = frame.fillna(axis=0, method="bfill").fillna(axis=0, method="ffill")
 
         # Filter frame by desired columns
         final_frame = frame[features]

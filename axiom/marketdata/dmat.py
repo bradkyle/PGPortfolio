@@ -8,6 +8,8 @@ import logging
 from axiom.tools.configprocess import parse_time
 from axiom.tools.data import get_short_type_list
 import axiom.marketdata.replaybuffer as rb
+from timeit import default_timer as timer
+
 
 MIN_NUM_PERIOD = 3
 
@@ -180,14 +182,16 @@ class DataMatrices:
         with shape [batch_size, assets]; "w" a list of numpy arrays list length is
         batch_size
         """
+        # start = timer()
         batch = self.__pack_samples([exp.state_index for exp in self.__replay_buffer.next_experience_batch()])
+        # end = timer()
+        # print(end - start)
         return batch
 
     """ This is how the data is fed"""
     def __pack_samples(self, indexs):
         indexs = np.array(indexs)
 
-        # 
         last_w = self.__PVM.values[indexs-1, :]
 
         def setw(w):
@@ -198,14 +202,12 @@ class DataMatrices:
         X = M[:, :, :, :-1]
         y = M[:, :, :, -1] / M[:, 0, None, :, -2]
         samples = {"X": X, "y": y, "last_w": last_w, "setw": setw}
-        print(samples)
         return samples
 
     # volume in y is the volume in next access period
     def get_submatrix(self, ind):
         # get frame of features from the global data matrix
         submatrix = self.__global_matrix[:, :, ind:ind+self._window_size+1]
-        print(submatrix.values)
         return submatrix.values
 
     def __divide_data(self, test_portion, portion_reversed):

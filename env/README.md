@@ -1,1 +1,0 @@
-Runs inference on a trained model to conduct trades on the bitfinex platform
