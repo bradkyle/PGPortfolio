@@ -107,7 +107,7 @@ class TraderTrainer:
         tflearn.is_training(False, self._agent.session)
 
         summary, v_pv, v_log_mean, v_loss, log_mean_free, sharpe, std_d, weights= \
-            self._evaluate(
+        self._evaluate(
                 "test", 
                 self.summary,
                 self._agent.portfolio_value, 
@@ -117,7 +117,7 @@ class TraderTrainer:
                 self._agent.sharp_ratio,
                 self._agent.standard_deviation,
                 self._agent.portfolio_weights
-            )
+        )
         self.test_writer.add_summary(summary, step)
 
         if not fast_train:
@@ -138,7 +138,6 @@ class TraderTrainer:
         table.add_row(["Log Mean", v_log_mean]);
         table.add_row(["Loss Value", v_loss]);
         table.add_row(["Log Mean Free", log_mean_free]);
-        table.add_row(["Weights", weights]);
         table.add_row(["Sharpe Ratio", sharpe]);
         table.add_row(["Standard Deviation", std_d]);
         

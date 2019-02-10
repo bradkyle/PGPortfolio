@@ -29,7 +29,7 @@ class BackTest(trader.Trader):
 
     @property
     def test_pc_vector(self):
-        return np.array(self.__test_pc_vector, dtype=np.float32)
+        return np.array(self.__test_pc_vector, dtype=np.float64)
 
     def finish_trading(self):
         self.__test_pv = self._total_capital

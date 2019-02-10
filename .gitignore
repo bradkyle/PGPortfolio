@@ -1,5 +1,6 @@
 rawdata/
 database/
+train_package
 train_package/
 
 node_modules

@@ -34,7 +34,7 @@ class NNAgent:
         # (future price) from which future portfolio value
         # and by extension future rewards can be derived.
         self.__y = tf.placeholder(
-            tf.float64,
+            tf.float32,
             shape=[
                None,
                self.__config["input"]["feature_number"],
