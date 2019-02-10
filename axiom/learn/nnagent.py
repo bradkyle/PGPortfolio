@@ -19,11 +19,11 @@ class NNAgent:
         # Default network is CNN
         # Input shape would be [3, 10, 100]
         self.__net = network.CNN(
-                                feature_number=config["input"]["feature_number"], # e.g. 3: high, low, close
-                                rows=self.__asset_number, # 15 i.e. the number of assets to be traded
-                                columns=config["input"]["window_size"], 
-                                layers=config["layers"],
-                                device=device
+            feature_number=config["input"]["feature_number"], # e.g. 3: high, low, close
+            rows=self.__asset_number, # 15 i.e. the number of assets to be traded
+            columns=config["input"]["window_size"], 
+            layers=config["layers"],
+            device=device
         )
 
         #
@@ -34,7 +34,7 @@ class NNAgent:
         # (future price) from which future portfolio value
         # and by extension future rewards can be derived.
         self.__y = tf.placeholder(
-            tf.float32,
+            tf.float64,
             shape=[
                None,
                self.__config["input"]["feature_number"],
@@ -51,27 +51,39 @@ class NNAgent:
         # in the output.
         self.__future_price = tf.concat(
             [
-                tf.ones([self.__net.input_num, 1]),
-                self.__y[:, 0, :]
+                tf.ones([self.__net.input_num, 1]), # Price of quote asset
+                self.__y[:, 0, :]  
             ],
             axis=1
         )
 
         # 
-        self.__future_omega = (self.__future_price * self.__net.output) /\
-                              tf.reduce_sum(self.__future_price * self.__net.output, axis=1)[:, None]
+        self.__future_omega = (
+            self.__future_price * self.__net.output
+        ) /\
+        tf.reduce_sum(
+            self.__future_price * self.__net.output,
+            axis=1
+        )[:, None]
 
         # tf.assert_equal(tf.reduce_sum(self.__future_omega, axis=1), tf.constant(1.0))
 
         # refers to the fee that the exchange will charge per transaction
         self.__commission_ratio = self.__config["trading"]["trading_consumption"]
 
+        # The pv vector is representative of the portoflio value
+        # of all the assets in a pot
+        # tf.reduce_sum computes the sum of elements across
+        # dimensions of a tensor
         self.__pv_vector = \
         tf.reduce_sum(
+            # multiply the net output (target portfolio vector)
+            # by the future price of each asset
             self.__net.output * self.__future_price, 
             reduction_indices=[1]
         ) *\
-        (
+        ( # Subtract the consumption from each portfolio scalar in the 
+          # next step   
             tf.concat(
                 [
                 tf.ones(1), 
@@ -82,19 +94,58 @@ class NNAgent:
         )
 
         # Training Operations
-        self.__log_mean_free = tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output * self.__future_price, reduction_indices=[1])))
-        self.__portfolio_value = tf.reduce_prod(self.__pv_vector)
-        self.__mean = tf.reduce_mean(self.__pv_vector)
-        self.__log_mean = tf.reduce_mean(tf.log(self.__pv_vector))
-        self.__standard_deviation = tf.sqrt(tf.reduce_mean((self.__pv_vector - self.__mean) ** 2))
-        self.__sharp_ratio = (self.__mean - 1) / self.__standard_deviation
-        self.__loss = self.__set_loss_function()
-        self.__train_operation = self.init_train(
-                                                 learning_rate=self.__config["training"]["learning_rate"],
-                                                 decay_steps=self.__config["training"]["decay_steps"],
-                                                 decay_rate=self.__config["training"]["decay_rate"],
-                                                 training_method=self.__config["training"]["training_method"]
+        # Calculates the total rate of return (log mean)
+        # during the given step  
+        self.__log_mean_free = tf.reduce_mean(
+            tf.log(
+                tf.reduce_sum(
+                    self.__net.output * self.__future_price, 
+                    reduction_indices=[1]
+                )
+            )
         )
+
+        # Computes the product of elements across
+        # dimensions of a tensor.
+        # In this instance given the
+        # TODO fix returns inf
+        self.__portfolio_value = tf.reduce_prod(
+            self.__pv_vector
+        )
+
+        #  
+        self.__mean = tf.reduce_mean(
+            self.__pv_vector
+        )
+
+        # 
+        self.__log_mean = tf.reduce_mean(
+            tf.log(
+                self.__pv_vector
+            )
+        )
+
+        # σp = Standard deviation of portfolio’s excess return
+        # standard deviation in this instance refers to the volatility
+        self.__standard_deviation = tf.sqrt(
+            tf.reduce_mean(
+                (self.__pv_vector - self.__mean) ** 2
+            )
+        )
+
+        # given the risk free rate of return is not taken into account
+        # the quote asset is given 1 as a risk free rate of return
+        self.__sharp_ratio = (self.__mean - 1) / self.__standard_deviation
+
+        self.__loss = self.__set_loss_function()
+
+        self.__train_operation = self.init_train(
+            learning_rate=self.__config["training"]["learning_rate"],
+            decay_steps=self.__config["training"]["decay_steps"],
+            decay_rate=self.__config["training"]["decay_rate"],
+            training_method=self.__config["training"]["training_method"]
+        )
+
         self.__saver = tf.train.Saver()
 
         if restore_dir:
@@ -148,24 +199,62 @@ class NNAgent:
 
     def __set_loss_function(self):
         def loss_function4():
-            return -tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output[:] * self.__future_price,
-                                                        reduction_indices=[1])))
+            return -tf.reduce_mean(
+                        tf.log(
+                            tf.reduce_sum(
+                                self.__net.output[:] * self.__future_price,
+                                reduction_indices=[1]
+                            )
+                        )
+                    )
 
         def loss_function5():
-            return -tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output * self.__future_price, reduction_indices=[1]))) + \
-                   LAMBDA * tf.reduce_mean(tf.reduce_sum(-tf.log(1 + 1e-6 - self.__net.output), reduction_indices=[1]))
+            return -tf.reduce_mean(
+                        tf.log(
+                            tf.reduce_sum(
+                                self.__net.output * self.__future_price, reduction_indices=[1]
+                            )
+                        )
+                    ) + \
+                    LAMBDA * \
+                    tf.reduce_mean(
+                        tf.reduce_sum(
+                            -tf.log(1 + 1e-6 - self.__net.output), reduction_indices=[1]
+                        )
+                    )
 
         def loss_function6():
-            return -tf.reduce_mean(tf.log(self.pv_vector))
+            return -tf.reduce_mean(
+                        tf.log(
+                            self.pv_vector
+                        )
+                    )
 
         def loss_function7():
-            return -tf.reduce_mean(tf.log(self.pv_vector)) + \
-                   LAMBDA * tf.reduce_mean(tf.reduce_sum(-tf.log(1 + 1e-6 - self.__net.output), reduction_indices=[1]))
+            return -tf.reduce_mean(
+                        tf.log(self.pv_vector)
+                    ) + \
+                    LAMBDA * \
+                    tf.reduce_mean(
+                        tf.reduce_sum(
+                            -tf.log(1 + 1e-6 - self.__net.output),
+                            reduction_indices=[1]
+                        )
+                    )
 
         def with_last_w():
-            return -tf.reduce_mean(tf.log(tf.reduce_sum(self.__net.output[:] * self.__future_price, reduction_indices=[1])
-                                          -tf.reduce_sum(tf.abs(self.__net.output[:, 1:] - self.__net.previous_w)
-                                                         *self.__commission_ratio, reduction_indices=[1])))
+            return -tf.reduce_mean(
+                        tf.log(
+                            tf.reduce_sum(
+                            self.__net.output[:] * self.__future_price,
+                            reduction_indices=[1]
+                            )
+                            -tf.reduce_sum(
+                                tf.abs(self.__net.output[:, 1:] - self.__net.previous_w)*self.__commission_ratio,
+                                reduction_indices=[1]
+                            )
+                        )
+                    )
 
         loss_function = loss_function5
         if self.__config["training"]["loss_function"] == "loss_function4":
@@ -225,13 +314,13 @@ class NNAgent:
         assert not np.any(np.isnan(last_w)),\
             "the last_w is {}".format(last_w)
         results = self.__net.session.run(
-                                         tensors,
-                                         feed_dict={
-                                                    self.__net.input_tensor: x,
-                                                    self.__y: y,
-                                                    self.__net.previous_w: last_w,
-                                                    self.__net.input_num: x.shape[0]
-                                         }
+            tensors,
+            feed_dict={
+                    self.__net.input_tensor: x,
+                    self.__y: y,
+                    self.__net.previous_w: last_w,
+                    self.__net.input_num: x.shape[0]
+            }
         )
         setw(results[-1][:, 1:])
         return results[:-1]

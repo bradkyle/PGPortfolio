@@ -25,6 +25,7 @@ class BQHistoryManager:
         self.__bq_table = bq_table
         self.__client = bigquery.Client()
 
+    # TODO cache result locally in file 
     def get_feature_frame(
         self,
         bq_table,

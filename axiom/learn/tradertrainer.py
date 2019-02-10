@@ -11,6 +11,7 @@ import tflearn
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from prettytable import PrettyTable
 from axiom.learn.nnagent import NNAgent
 from axiom.marketdata.dmat import DataMatrices
 import logging
@@ -105,13 +106,18 @@ class TraderTrainer:
         fast_train = self.train_config["fast_train"]
         tflearn.is_training(False, self._agent.session)
 
-        summary, v_pv, v_log_mean, v_loss, log_mean_free, weights= \
-            self._evaluate("test", self.summary,
-                           self._agent.portfolio_value,
-                           self._agent.log_mean,
-                           self._agent.loss,
-                           self._agent.log_mean_free,
-                           self._agent.portfolio_weights)
+        summary, v_pv, v_log_mean, v_loss, log_mean_free, sharpe, std_d, weights= \
+            self._evaluate(
+                "test", 
+                self.summary,
+                self._agent.portfolio_value, 
+                self._agent.log_mean,
+                self._agent.loss,
+                self._agent.log_mean_free,
+                self._agent.sharp_ratio,
+                self._agent.standard_deviation,
+                self._agent.portfolio_weights
+            )
         self.test_writer.add_summary(summary, step)
 
         if not fast_train:
@@ -122,16 +128,28 @@ class TraderTrainer:
         logging.info('='*30)
         logging.info('step %d' % step)
         logging.info('-'*30)
+
         if not fast_train:
             logging.info('training loss is %s\n' % loss_value)
-        logging.info('the portfolio value on test set is %s\nlog_mean is %s\n'
-                     'loss_value is %3f\nlog mean without commission fee is %3f\n' % \
-                     (v_pv, v_log_mean, v_loss, log_mean_free))
+
+        table = PrettyTable(['Metric', 'Value'])
+
+        table.add_row(["Portfolio Value", v_pv]);
+        table.add_row(["Log Mean", v_log_mean]);
+        table.add_row(["Loss Value", v_loss]);
+        table.add_row(["Log Mean Free", log_mean_free]);
+        table.add_row(["Weights", weights]);
+        table.add_row(["Sharpe Ratio", sharpe]);
+        table.add_row(["Standard Deviation", std_d]);
+        
+        print(table)
+
         logging.info('='*30+"\n")
 
         if not self.__snap_shot:
             self._agent.save_model(self.save_path)
 
+        # Save model if better than best previous model
         elif v_pv > self.best_metric:
             self.best_metric = v_pv
             logging.info("get better model at %s steps,"
@@ -209,6 +227,7 @@ class TraderTrainer:
         total_training_time = 0
 
         # Range over test sets
+        # TODO distributed training
         for i in range(self.train_config["steps"]):
             step_start = time.time()
 
