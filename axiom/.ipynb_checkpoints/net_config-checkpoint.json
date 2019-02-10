@@ -19,7 +19,7 @@
 
   "input":{
     "window_size":90,
-    "coin_number":15,
+    "asset_number":15,
     "global_period":300,
     "feature_number":3,
     "test_portion":0.08,

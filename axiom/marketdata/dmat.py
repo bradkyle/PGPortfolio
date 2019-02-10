@@ -1,16 +1,15 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-import axiom.marketdata.globaldatamatrix as gdm
+import axiom.marketdata.gdmx as gdm
 import numpy as np
 import pandas as pd
 import logging
 from axiom.tools.configprocess import parse_time
-from axiom.tools.data import get_volume_forward, get_type_list
+from axiom.tools.data import get_short_type_list
 import axiom.marketdata.replaybuffer as rb
 
 MIN_NUM_PERIOD = 3
-
 
 class DataMatrices:
     def __init__(self,
@@ -20,7 +19,6 @@ class DataMatrices:
                  batch_size=50,
                  volume_average_days=30,
                  buffer_bias_ratio=0,
-                 market="bitfinex_btc",
                  asset_filter=1,
                  window_size=50,
                  feature_number=3,
@@ -29,10 +27,8 @@ class DataMatrices:
                  online=False,
                  is_permed=False,
                  type_list = None,
-                 db_table="Bitfinex_BTC",
-                 db_file="BitfinexData.db"
+                 bq_table="Binance_1m_BTC_klines.Binance_1m_BTC_1500005000_1548440000"
     ):
-        print(period)
         """
         :param start: Unix time
         :param end: Unix time
@@ -51,49 +47,42 @@ class DataMatrices:
         """
         start = int(start)
         self.__end = int(end)
-
+        
         # assert window_size >= MIN_NUM_PERIOD
         self.__asset_no = asset_filter
 
         if type_list is None:
-            type_list = get_type_list(feature_number)
+            type_list = get_short_type_list(feature_number)
         self.__features = type_list
         self.feature_number = feature_number
-        volume_forward = get_volume_forward(self.__end-start, test_portion, portion_reversed)
-        market=market.strip()
-        # References the exchange with the respective basal currency
 
-        self.__history_manager = gdm.HistoryManager(
+        self.__history_manager = gdm.BQHistoryManager(
             asset_number=asset_filter,
-            end=self.__end,
-            volume_average_days=volume_average_days,
-            volume_forward=volume_forward,
-            online=online,
-            table=db_table,
-            db_file=db_file
+            bq_table=bq_table
         )
 
-        # Returns panel 
-        self.__global_data = self.__history_manager.get_global_panel(
+        self.__global_data = self.__history_manager.get_global_frame(
                 start,
                 self.__end,
-                period=period,
                 features=type_list
         )
 
-        self.__period_length = period
+        self.__global_matrix = self.__global_data.to_xarray().to_array()
+        print(self.__global_matrix.shape)
 
         # portfolio vector memory, [time, assets]
         self.__PVM = pd.DataFrame(
-            index=self.__global_data.minor_axis,
-            columns=self.__global_data.major_axis
+            index=self.__global_data.index.levels[1],
+            columns=self.__global_data.index.levels[0]
         )
 
         # fill non existent values with a standard identifier
         self.__PVM = self.__PVM.fillna(1.0 / self.__asset_no)
 
         self._window_size = window_size
-        self._num_periods = len(self.__global_data.minor_axis) # get length of time field
+
+        # get length of time field
+        self._num_periods = len(self.__global_data.index.levels[1]) 
         self.__divide_data(test_portion, portion_reversed)
 
         self._portion_reversed = portion_reversed
@@ -133,11 +122,9 @@ class DataMatrices:
         end = parse_time(input_config["end_date"])
         print(start)
         print(end)
-        print(input_config["db_file"])
         return DataMatrices(
             start=start,
             end=end,
-            market=input_config["market"],
             feature_number=input_config["feature_number"],
             window_size=input_config["window_size"],
             online=input_config["online"],
@@ -149,8 +136,7 @@ class DataMatrices:
             volume_average_days=input_config["volume_average_days"],
             test_portion=input_config["test_portion"],
             portion_reversed=input_config["portion_reversed"],
-            db_table=input_config["db_table"],
-            db_file=input_config["db_file"]
+            bq_table=input_config["bq_table"]
         )
 
     @property
@@ -180,9 +166,11 @@ class DataMatrices:
         self.__replay_buffer.append_experience(appended_index)
 
     def get_test_set(self):
+        print("Getting test set")
         return self.__pack_samples(self.test_indices)
 
     def get_training_set(self):
+        print("Getting train set")
         return self.__pack_samples(self._train_ind[:-self._window_size])
 
     def next_batch(self):
@@ -209,12 +197,16 @@ class DataMatrices:
         M = np.array(M)
         X = M[:, :, :, :-1]
         y = M[:, :, :, -1] / M[:, 0, None, :, -2]
-        return {"X": X, "y": y, "last_w": last_w, "setw": setw}
+        samples = {"X": X, "y": y, "last_w": last_w, "setw": setw}
+        print(samples)
+        return samples
 
     # volume in y is the volume in next access period
     def get_submatrix(self, ind):
         # get frame of features from the global data matrix
-        return self.__global_data.values[:, :, ind:ind+self._window_size+1]
+        submatrix = self.__global_matrix[:, :, ind:ind+self._window_size+1]
+        print(submatrix.values)
+        return submatrix.values
 
     def __divide_data(self, test_portion, portion_reversed):
         train_portion = 1 - test_portion

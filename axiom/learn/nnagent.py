@@ -14,13 +14,13 @@ class NNAgent:
             device="cpu"
     ):
         self.__config = config
-        self.__coin_number = config["input"]["coin_number"]
+        self.__asset_number = config["input"]["asset_number"]
 
         # Default network is CNN
         # Input shape would be [3, 10, 100]
         self.__net = network.CNN(
                                 feature_number=config["input"]["feature_number"], # e.g. 3: high, low, close
-                                rows=self.__coin_number, # 15 i.e. the number of assets to be traded
+                                rows=self.__asset_number, # 15 i.e. the number of assets to be traded
                                 columns=config["input"]["window_size"], 
                                 layers=config["layers"],
                                 device=device
@@ -38,7 +38,7 @@ class NNAgent:
             shape=[
                None,
                self.__config["input"]["feature_number"],
-               self.__coin_number
+               self.__asset_number
             ]
         )
 

@@ -33,7 +33,7 @@ class Poloniex:
         self.marketTicker = lambda x=0: self.api('returnTicker')
         self.marketVolume = lambda x=0: self.api('return24hVolume')
         self.marketStatus = lambda x=0: self.api('returnCurrencies')
-        self.marketLoans = lambda coin: self.api('returnLoanOrders',{'currency':coin})
+        self.marketLoans = lambda asset: self.api('returnLoanOrders',{'currency':asset})
         self.marketOrders = lambda pair='all', depth=10:\
             self.api('returnOrderBook', {'currencyPair':pair, 'depth':depth})
         self.marketChart = lambda pair, period=day, start=time.time()-(week*1), end=time.time(): self.api('returnChartData', {'currencyPair':pair, 'period':period, 'start':start, 'end':end})

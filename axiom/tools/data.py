@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def pricenorm3d(m, features, norm_method, fake_ratio=1.0, with_y=True):
-    """normalize the price tensor, whose shape is [features, coins, windowsize]
+    """normalize the price tensor, whose shape is [features, assets, windowsize]
     @:param m: input tensor, unnormalized and there could be nan in it
     @:param with_y: if the tensor include y (future price)
         logging.debug("price are %s" % (self._latest_price_matrix[0, :, -1]))
@@ -22,7 +22,7 @@ def pricenorm3d(m, features, norm_method, fake_ratio=1.0, with_y=True):
     return result
 
 
-# input m is a 2d matrix, (coinnumber+1) * windowsize
+# input m is a 2d matrix, (assetnumber+1) * windowsize
 def pricenorm2d(m, reference_column,
                 norm_method="absolute", fake_ratio=1.0, one_position=2):
     if norm_method=="absolute":
@@ -82,6 +82,30 @@ def get_type_list(feature_number):
         type_list = ["close", "high", "low"]
     elif feature_number == 4:
         type_list = ["close", "high", "low", "open"]
+    else:
+        raise ValueError("feature number could not be %s" % feature_number)
+    return type_list
+
+def get_short_type_list(feature_number):
+    """
+    :param feature_number: an int indicates the number of features
+    :return: a list of features n
+    """
+    if feature_number == 1:
+        type_list = ["c"]
+    elif feature_number == 2:
+        type_list = ["c", "v"]
+        raise NotImplementedError("the feature volume is not supported currently")
+    elif feature_number == 3:
+        type_list = ["c", "h", "l"]
+    elif feature_number == 4:
+        type_list = ["c", "h", "l", "o"]
+    elif feature_number == 5:
+        type_list = ["c", "h", "l", "o", "v"]
+        raise NotImplementedError("the feature volume is not supported currently")
+    elif feature_number == 6:
+        type_list = ["c", "h", "l", "o", "v", "t"]
+        raise NotImplementedError("the features volume and trades are not supported currently")
     else:
         raise ValueError("feature number could not be %s" % feature_number)
     return type_list

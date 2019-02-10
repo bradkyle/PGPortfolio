@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from axiom.learn.nnagent import NNAgent
-from axiom.marketdata.datamatrices import DataMatrices
+from axiom.marketdata.dmat import DataMatrices
 import logging
 Result = collections.namedtuple("Result",
                                 [
@@ -48,7 +48,7 @@ class TraderTrainer:
         np.random.seed(config["random_seed"])
 
         self.__window_size = self.input_config["window_size"]
-        self.__coin_number = self.input_config["coin_number"]
+        self.__asset_number = self.input_config["asset_number"]
         self.__batch_size = self.train_config["batch_size"]
         self.__snap_shot = self.train_config["snap_shot"]
         config["input"]["fake_data"] = fake_data
