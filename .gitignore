@@ -3,6 +3,7 @@ database/
 train_package/
 
 node_modules
+node_modules/
 
 # Logs
 logs
