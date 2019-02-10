@@ -113,12 +113,14 @@ class NNAgent:
             self.__pv_vector
         )
 
-        #  
+        #  Computes the mean of elements across 
+        # dimensions of a tensor.
         self.__mean = tf.reduce_mean(
             self.__pv_vector
         )
 
-        # 
+        # Computes the mean of elements across 
+        # dimensions of a tensor.
         self.__log_mean = tf.reduce_mean(
             tf.log(
                 self.__pv_vector

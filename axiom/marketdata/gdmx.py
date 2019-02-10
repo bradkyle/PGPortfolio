@@ -25,7 +25,8 @@ class BQHistoryManager:
         self.__bq_table = bq_table
         self.__client = bigquery.Client()
 
-    # TODO cache result locally in file 
+    # TODO cache result locally in file
+    # TODO order by volume
     def get_feature_frame(
         self,
         bq_table,
@@ -90,7 +91,7 @@ class BQHistoryManager:
             bq_table=self.__bq_table,
             start=start,
             end=end,
-            selection_start=(end-(60*1440)), # 1 DAY
+            selection_start=(end-((60*1440)*30)), # 30 DAYs
             selection_end=end,
             asset_num=self._asset_number
         )
