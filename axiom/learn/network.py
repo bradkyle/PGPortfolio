@@ -73,8 +73,10 @@ class CNN(NeuralNetWork):
                                                               regularizer=layer["regularizer"],
                                                               weight_decay=layer["weight_decay"] )
                 self.add_layer_to_dict(layer["type"], network)
+                
             elif layer["type"] == "DropOut":
                 network = tflearn.layers.core.dropout(network, layer["keep_probability"])
+
             elif layer["type"] == "EIIE_Dense":
                 width = network.get_shape()[2]
                 network = tflearn.layers.conv_2d(network, int(layer["filter_number"]),
@@ -85,6 +87,7 @@ class CNN(NeuralNetWork):
                                                  regularizer=layer["regularizer"],
                                                  weight_decay=layer["weight_decay"])
                 self.add_layer_to_dict(layer["type"], network)
+
             elif layer["type"] == "ConvLayer":
                 network = tflearn.layers.conv_2d(network, int(layer["filter_number"]),
                                                  allint(layer["filter_shape"]),
@@ -92,14 +95,18 @@ class CNN(NeuralNetWork):
                                                  layer["padding"],
                                                  layer["activation_function"],
                                                  regularizer=layer["regularizer"],
-                                                 weight_decay=layer["weight_decay"])
+                                                 weight_decay=layer["weight_decay"])                                                 
                 self.add_layer_to_dict(layer["type"], network)
+
             elif layer["type"] == "MaxPooling":
                 network = tflearn.layers.conv.max_pool_2d(network, layer["strides"])
+
             elif layer["type"] == "AveragePooling":
                 network = tflearn.layers.conv.avg_pool_2d(network, layer["strides"])
+
             elif layer["type"] == "LocalResponseNormalization":
                 network = tflearn.layers.normalization.local_response_normalization(network)
+
             elif layer["type"] == "EIIE_Output":
                 width = network.get_shape()[2]
                 network = tflearn.layers.conv_2d(network, 1, [1, width], padding="valid",
@@ -112,6 +119,7 @@ class CNN(NeuralNetWork):
                 network = tf.concat([btc_bias, network], 1)
                 network = tflearn.layers.core.activation(network, activation="softmax")
                 self.add_layer_to_dict(layer["type"], network, weights=False)
+
             elif layer["type"] == "Output_WithW":
                 network = tflearn.flatten(network)
                 network = tf.concat([network,self.previous_w], axis=1)
@@ -119,6 +127,7 @@ class CNN(NeuralNetWork):
                                                   activation="softmax",
                                                   regularizer=layer["regularizer"],
                                                   weight_decay=layer["weight_decay"])
+
             elif layer["type"] == "EIIE_Output_WithW":
                 width = network.get_shape()[2]
                 height = network.get_shape()[1]

@@ -6,6 +6,9 @@ train_package/
 node_modules
 node_modules/
 
+data/
+data
+
 # Logs
 logs
 *.log

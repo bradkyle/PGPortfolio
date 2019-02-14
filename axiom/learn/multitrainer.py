@@ -13,8 +13,9 @@ import pandas as pd
 import tensorflow as tf
 from prettytable import PrettyTable
 from axiom.learn.nnagent import NNAgent
-from axiom.marketdata.dmat import DataMatrices
+from axiom.marketdata.mega_dmat import DataMatrices
 import logging
+import axiom.marketdata.mega_gdmx as gdm
 Result = collections.namedtuple("Result",
                                 [
                                  "test_pv",
@@ -54,18 +55,15 @@ class TraderTrainer:
         self.__snap_shot = self.train_config["snap_shot"]
         config["input"]["fake_data"] = fake_data
 
-        # Load data from Database into training frame for use
-        self._matrix = DataMatrices.create_from_config(config);
-
-        self.test_set = self._matrix.get_test_set()
-
-        if not config["training"]["fast_train"]:
-            self.training_set = self._matrix.get_training_set()
-
         self.upperbound_validation = 1
         self.upperbound_test = 1
         tf.set_random_seed(self.config["random_seed"])
         self.device = device
+
+        self.history_manager = gdm.PQHistoryManager(
+            asset_number=self.__asset_number,
+            pq_dataset_path=self.input_config["pq_dataset_path"]
+        )
 
         if agent:
             self._agent = agent
@@ -101,6 +99,86 @@ class TraderTrainer:
         for i in array:
             total = total * i
         return total
+
+    def train_net(self, log_file_dir="./tensorboard", model_path="./models", index="0"):
+        """
+        :param log_file_dir: logging of the training process
+        :param index: sub-folder name under train_package
+        :return: the result named tuple
+        """
+        # self.__print_upperbound()
+        if log_file_dir:
+            if self.device == "cpu":
+                with tf.device("/cpu:0"):
+                    self.__init_tensor_board(log_file_dir)
+            else:
+                self.__init_tensor_board(log_file_dir)
+        starttime = time.time()
+
+        total_data_time = 0
+        total_training_time = 0
+
+        # Range over test sets
+        # TODO distributed training
+        i=0
+        for e in range(self.train_config["epochs"]):
+            logging.info('='*60)
+            logging.info("STARTING EPOCH "+str(e))
+            logging.info('='*60)
+            # Load data from Database into training frame for use
+            self._matrix = DataMatrices.create_with_config(
+                self.history_manager,
+                self.config
+            );
+
+            self.test_set = self._matrix.get_test_set()
+
+            if not self.config["training"]["fast_train"]:
+                self.training_set = self._matrix.get_training_set()
+            
+            for x in range(self.train_config["epoch_steps"]):
+                i+=1
+                step_start = time.time()
+                #
+                x, y, last_w, setw = self.next_batch()
+                finish_data = time.time()
+                total_data_time += (finish_data - step_start)
+
+                self._agent.train(x, y, last_w=last_w, setw=setw)
+
+                total_training_time += time.time() - finish_data
+
+                # Log model status at specified interval
+                if i % 1000 == 0 and log_file_dir:
+                    logging.info("average time for data accessing is %s"%(total_data_time/1000))
+                    logging.info("average time for training is %s"%(total_training_time/1000))
+                    total_training_time = 0
+                    total_data_time = 0
+                    self.log_between_steps(i)
+
+            # Export model at specified interval    
+            self._agent.export_model(
+                model_path+"/" +str(e)+ "/"
+            )
+
+            logging.info('='*60)
+            logging.info("EPOCH "+str(e)+" IS OVER")
+            logging.info('='*60)
+
+            # if self.save_path:
+            #     self._agent.recycle()
+            #     best_agent = NNAgent(self.config, restore_dir=self.save_path)
+            #     self._agent = best_agent
+
+            pv, log_mean = self._evaluate("test", self._agent.portfolio_value, self._agent.log_mean)
+            logging.warning('the portfolio value train No.%s is %s log_mean is %s,'
+                            ' the training time is %d seconds' % (index, pv, log_mean, time.time() - starttime))
+
+            logging.info('='*60)
+
+
+
+        # return self.__log_result_csv(index, time.time() - starttime)
 
     def log_between_steps(self, step):
         fast_train = self.train_config["fast_train"]
@@ -141,9 +219,8 @@ class TraderTrainer:
         table.add_row(["Sharpe Ratio", sharpe]);
         table.add_row(["Standard Deviation", std_d]);
         
-        print(table)
-
-        logging.info('='*30+"\n")
+        logging.info(table);
+        logging.info('='*30+"\n");
 
         if not self.__snap_shot:
             self._agent.save_model(self.save_path)
@@ -206,63 +283,6 @@ class TraderTrainer:
         ]
         with open('data.json', 'w') as outfile:
             json.dump(data, outfile)
-
-
-    def train_net(self, log_file_dir="./tensorboard", model_path="./models", index="0"):
-        """
-        :param log_file_dir: logging of the training process
-        :param index: sub-folder name under train_package
-        :return: the result named tuple
-        """
-        self.__print_upperbound()
-        if log_file_dir:
-            if self.device == "cpu":
-                with tf.device("/cpu:0"):
-                    self.__init_tensor_board(log_file_dir)
-            else:
-                self.__init_tensor_board(log_file_dir)
-        starttime = time.time()
-
-        total_data_time = 0
-        total_training_time = 0
-
-        # Range over test sets
-        # TODO distributed training
-        for i in range(self.train_config["steps"]):
-            step_start = time.time()
-
-            #
-            x, y, last_w, setw = self.next_batch()
-            finish_data = time.time()
-            total_data_time += (finish_data - step_start)
-
-            self._agent.train(x, y, last_w=last_w, setw=setw)
-
-            total_training_time += time.time() - finish_data
-
-            # Log model status at specified interval
-            if i % 1000 == 0 and log_file_dir:
-                logging.info("average time for data accessing is %s"%(total_data_time/1000))
-                logging.info("average time for training is %s"%(total_training_time/1000))
-                total_training_time = 0
-                total_data_time = 0
-                self.log_between_steps(i)
-
-            # Export model at specified interval    
-            if i % self.export_interval == 0 and i != 0:
-                self._agent.export_model(model_path+"/" +str(int(i/self.export_interval))+ "/")
-
-        if self.save_path:
-            self._agent.recycle()
-            best_agent = NNAgent(self.config, restore_dir=self.save_path)
-            self._agent = best_agent
-
-        pv, log_mean = self._evaluate("test", self._agent.portfolio_value, self._agent.log_mean)
-        logging.warning('the portfolio value train No.%s is %s log_mean is %s,'
-                        ' the training time is %d seconds' % (index, pv, log_mean, time.time() - starttime))
-
-
-        return self.__log_result_csv(index, time.time() - starttime)
 
     def __log_result_csv(self, index, time):
         from axiom.trade import backtest

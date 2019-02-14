@@ -308,6 +308,7 @@ class NNAgent:
         """
         tensors = list(tensors)
         tensors.append(self.__net.output)
+        # print(x)
         assert not np.any(np.isnan(x))
         
         #Test whether any array element along a given axis evaluates to True.

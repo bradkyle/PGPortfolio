@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "config": "^3.0.1",
+    "numjs": "^0.16.0"
+  }
+}
